@@ -1,0 +1,52 @@
+[
+  {
+    "address": "set realmlist server-wotlk.legendesylvania.com",
+    "disabled": false,
+    "active": true
+  },
+  {
+    "address": "set realmlist wotlk.murlocvillage.com",
+    "disabled": true,
+    "active": false
+  },
+  {
+    "address": "logon.warmane.com",
+    "disabled": false,
+    "active": false
+  },
+  {
+    "address": "firestorm-servers.com",
+    "disabled": false,
+    "active": false
+  },
+  {
+    "address": "test",
+    "disabled": true,
+    "active": false
+  },
+  {
+    "address": "sethraliss.firestorm.com",
+    "disabled": false,
+    "active": false
+  },
+  {
+    "address": "elune.way-of-elendil.fr",
+    "disabled": true,
+    "active": false
+  },
+  {
+    "address": "wow.monster-wow.com",
+    "disabled": false,
+    "active": false
+  },
+  {
+    "address": "heroes-wow.com",
+    "disabled": false,
+    "active": false
+  },
+  {
+    "address": "wow-freakz.com",
+    "disabled": true,
+    "active": false
+  }
+]

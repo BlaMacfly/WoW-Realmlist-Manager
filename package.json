@@ -1,0 +1,25 @@
+{
+  "name": "wow-realmlist-switcher",
+  "version": "1.0.0",
+  "description": "Application Electron pour changer facilement le realmlist de WoW",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "package-win": "electron-packager . RealmlistSwitcher --platform=win32 --arch=x64 --electron-version=33.2.1 --out=dist --icon=assets/favicon.ico"
+  },
+  "dependencies": {
+    "electron-store": "^8.1.0"
+  },
+  "devDependencies": {
+    "electron": "^33.2.1"
+  },
+  "keywords": [
+    "wow",
+    "realmlist",
+    "electron",
+    "switcher"
+  ],
+  "author": "Marty",
+  "license": "MIT"
+}
+
