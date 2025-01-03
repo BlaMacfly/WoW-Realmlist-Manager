@@ -8,7 +8,8 @@ const translations = {
         browse: 'Parcourir...',
         langLabel: 'Langue :',
         modify: 'Modifier',
-        launch: 'Lancer WoW'
+        launch: 'Lancer WoW',
+        modificationSuccess: 'L'adresse realmlist a été modifiée avec succès.'
     },
     en: {
         title: 'Edit Realmlist Addresses',
@@ -17,7 +18,8 @@ const translations = {
         browse: 'Browse...',
         langLabel: 'Language:',
         modify: 'Edit',
-        launch: 'Launch WoW'
+        launch: 'Launch WoW',
+        modificationSuccess: 'The realmlist address has been successfully modified.'
     },
     es: {
         title: 'Editar Direcciones de Realmlist',
@@ -26,7 +28,8 @@ const translations = {
         browse: 'Explorar...',
         langLabel: 'Idioma:',
         modify: 'Editar',
-        launch: 'Iniciar WoW'
+        launch: 'Iniciar WoW',
+        modificationSuccess: 'La dirección realmlist ha sido modificada con éxito.'
     }
 };
 
@@ -51,6 +54,22 @@ function setLanguage(lang) {
 }
 
 setLanguage('fr');
+
+window.addEventListener('DOMContentLoaded', () => {
+    ipcRenderer.send('load-config');
+    ipcRenderer.send('get-realmlists');  // Assure l'envoi de la demande dès le chargement
+});
+
+ipcRenderer.on('config-loaded', (event, config) => {
+    if (config.wowRealmlistPath) {
+        document.getElementById('path-input').value = config.wowRealmlistPath;
+    }
+    if (config.wowExePath) {
+        document.getElementById('exe-path-input').value = config.wowExePath;
+        wowExePath = config.wowExePath;
+    }
+    setLanguage(config.language || 'fr');
+});
 
 document.getElementById('language-selector').addEventListener('change', (event) => {
     const selectedLang = event.target.value;
@@ -95,13 +114,17 @@ ipcRenderer.on('selected-exe-path', (event, path) => {
 const clickSound = new Audio('assets/click.mp3');
 const toggleSound = new Audio('assets/toggle.mp3');
 
-ipcRenderer.send('get-realmlists');
-
 ipcRenderer.on('realmlist-data', (event, realmlists) => {
+    console.log('Données reçues :', realmlists);
     const container = document.getElementById('realmlist-container');
     container.innerHTML = '';
 
+    if (realmlists.length === 0) {
+        console.warn('Aucune adresse realmlist trouvée.');
+    }
+
     realmlists.forEach((realm, index) => {
+        console.log('Ajout du realmlist :', realm);
         const div = document.createElement('div');
         div.className = 'realm-item';
 
@@ -109,6 +132,7 @@ ipcRenderer.on('realmlist-data', (event, realmlists) => {
         input.type = 'text';
         input.value = realm.address;
         input.id = `realm-input-${index}`;
+        input.readOnly = false;
 
         const modifyButton = document.createElement('button');
         modifyButton.innerText = translations[selectedLanguage].modify;
@@ -117,6 +141,7 @@ ipcRenderer.on('realmlist-data', (event, realmlists) => {
             const updatedAddress = input.value;
             clickSound.play();
             ipcRenderer.send('update-realm', updatedAddress, index);
+            alert(translations[selectedLanguage].modificationSuccess);
         });
 
         const toggleButton = document.createElement('button');
@@ -137,9 +162,8 @@ ipcRenderer.on('realmlist-data', (event, realmlists) => {
 
 ipcRenderer.on('modification-result', (event, message) => {
     alert(message);
-    ipcRenderer.send('get-realmlists');
+    ipcRenderer.send('get-realmlists');  // Recharge la liste après modification
 });
-
 
 
 

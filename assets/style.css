@@ -1,24 +1,45 @@
 body {
     background-color: #0c1a26; /* Bleu nuit glacial */
     color: #d1d5db; /* Gris clair pour une bonne lisibilité */
-    font-family: 'Arial', sans-serif;
+    font-family: 'Morpheus', 'Arial', sans-serif;
+    margin: 20px;
 }
+
 h1 {
     text-align: center;
-    color: #99ccff; /* Bleu clair éclatant, inspiré du givre */
+    color: #99ccff; /* Bleu clair éclatant */
 }
+
 a {
-    color: #4da6ff; /* Bleu vif pour les liens, rappelant la magie glacée */
+    color: #4da6ff; /* Bleu vif pour les liens */
 }
-button {
-    background-color: #1c3b57; /* Bleu profond pour les boutons */
+
+div {
+    margin-bottom: 20px;
+}
+
+input[type="text"] {
+    width: 300px;
+    padding: 8px;
+    margin-right: 10px;
+    border: 1px solid #c79c6e; /* Doré WoW */
+    border-radius: 5px;
+    background-color: #1c3b57;
     color: #d1d5db;
-    border: 1px solid #4da6ff;
+    font-family: 'Morpheus', 'Arial', sans-serif;
+}
+
+button {
+    background-color: #2e2a25;
+    color: #ffd700; /* Doré WoW */
+    font-family: 'Morpheus', 'Arial', sans-serif;
+    border: 1px solid #c79c6e; /* Doré */
     padding: 10px 20px;
     border-radius: 5px;
     cursor: pointer;
-}
-button:hover {
-    background-color: #2b4d68; /* Bleu légèrement plus clair au survol */
+    transition: background-color 0.3s;
 }
 
+button:hover {
+    background-color: #3b3a36;
+}
