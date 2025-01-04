@@ -54,48 +54,71 @@ function saveConfig() {
 }
 
 // Lire les adresses realm avec cache
-function getRealmlists(callback) {
-    const now = Date.now();
-    if (realmlistsCache && (now - lastCacheTime < CACHE_DURATION)) {
-        callback(realmlistsCache);
-        return;
-    }
-
-    fs.readFile(realmlistPath, 'utf-8', (err, data) => {
-        if (err) {
-            console.error("Erreur de lecture de realmlists.json :", err);
-            callback([]);
+function getRealmlists() {
+    return new Promise((resolve, reject) => {
+        const now = Date.now();
+        if (realmlistsCache && (now - lastCacheTime < CACHE_DURATION)) {
+            resolve(realmlistsCache);
             return;
         }
-        try {
-            realmlistsCache = JSON.parse(data);
-            lastCacheTime = now;
-            callback(realmlistsCache);
-        } catch (parseError) {
-            console.error("Erreur de parsing de realmlists.json :", parseError);
-            callback([]);
-        }
+
+        fs.readFile(realmlistPath, 'utf-8', (err, data) => {
+            if (err) {
+                console.error("Erreur de lecture de realmlists.json :", err);
+                reject(err);
+                return;
+            }
+            try {
+                realmlistsCache = JSON.parse(data);
+                lastCacheTime = now;
+                resolve(realmlistsCache);
+            } catch (parseError) {
+                console.error("Erreur de parsing de realmlists.json :", parseError);
+                reject(parseError);
+            }
+        });
     });
 }
 
-// Enregistrer les modifications de realmlists
-function saveRealmlists(realmlists, callback) {
-    fs.writeFile(realmlistPath, JSON.stringify(realmlists, null, 2), (err) => {
-        callback(err);
+// Enregistrer les modifications de realmlists avec vérification
+async function saveRealmlists(realmlists) {
+    const data = JSON.stringify(realmlists, null, 2);
+    
+    return new Promise((resolve, reject) => {
+        fs.writeFile(realmlistPath, data, async (err) => {
+            if (err) {
+                console.error("Erreur lors de la sauvegarde des realmlists:", err);
+                reject(err);
+                return;
+            }
+
+            // Vérifier que les données ont été correctement écrites
+            try {
+                const savedData = await fs.promises.readFile(realmlistPath, 'utf-8');
+                const savedRealmlists = JSON.parse(savedData);
+                
+                if (JSON.stringify(savedRealmlists) === JSON.stringify(realmlists)) {
+                    realmlistsCache = realmlists;
+                    lastCacheTime = Date.now();
+                    resolve(true);
+                } else {
+                    reject(new Error("Les données sauvegardées ne correspondent pas"));
+                }
+            } catch (verifyError) {
+                reject(verifyError);
+            }
+        });
     });
 }
 
-// Mettre à jour le fichier realmlist.wtf
-function updateWowRealmlist(newRealmlist) {
+// Mettre à jour le fichier realmlist.wtf avec vérification
+async function updateWowRealmlist(newRealmlist) {
     console.log('Tentative de mise à jour du realmlist.wtf...');
     console.log('Chemin actuel:', wowRealmlistPath);
     console.log('Nouvelle adresse:', newRealmlist);
 
     if (!wowRealmlistPath) {
-        const error = "Erreur: Le chemin du fichier realmlist.wtf n'est pas défini";
-        console.error(error);
-        mainWindow.webContents.send('update-error', error);
-        return;
+        throw new Error("Le chemin du fichier realmlist.wtf n'est pas défini");
     }
 
     // Vérifier si le chemin contient Data/frFR
@@ -107,33 +130,25 @@ function updateWowRealmlist(newRealmlist) {
         saveConfig();
     }
 
-    // Vérifier si le fichier existe
-    if (!fs.existsSync(wowRealmlistPath)) {
-        const error = `Erreur: Le fichier realmlist.wtf n'existe pas au chemin: ${wowRealmlistPath}`;
-        console.error(error);
-        mainWindow.webContents.send('update-error', error);
-        return;
+    // Créer le dossier s'il n'existe pas
+    const dir = path.dirname(wowRealmlistPath);
+    if (!fs.existsSync(dir)) {
+        await fs.promises.mkdir(dir, { recursive: true });
     }
 
     const formattedRealmlist = newRealmlist.trim().startsWith('set realmlist') 
         ? newRealmlist.trim() 
         : `set realmlist ${newRealmlist.trim()}`;
     
-    try {
-        fs.writeFileSync(wowRealmlistPath, formattedRealmlist + '\n', 'utf8');
-        const content = fs.readFileSync(wowRealmlistPath, 'utf-8');
-        
-        if (content.trim() === formattedRealmlist.trim()) {
-            console.log('Mise à jour réussie !');
-            mainWindow.webContents.send('update-success', 'Realmlist mis à jour avec succès');
-        } else {
-            throw new Error('Le contenu vérifié ne correspond pas à ce qui devrait être écrit');
-        }
-    } catch (error) {
-        const errorMsg = `Erreur lors de la mise à jour du realmlist.wtf: ${error.message}`;
-        console.error(errorMsg);
-        mainWindow.webContents.send('update-error', errorMsg);
+    await fs.promises.writeFile(wowRealmlistPath, formattedRealmlist + '\n', 'utf8');
+    
+    // Vérifier que le fichier a été correctement écrit
+    const content = await fs.promises.readFile(wowRealmlistPath, 'utf-8');
+    if (content.trim() !== formattedRealmlist) {
+        throw new Error('La vérification du contenu a échoué');
     }
+    
+    return true;
 }
 
 // Configuration de l'application
@@ -159,18 +174,56 @@ app.whenReady().then(() => {
     });
 
     // Gestionnaires d'événements IPC
+    ipcMain.on('get-realmlists', async (event) => {
+        try {
+            const realmlists = await getRealmlists();
+            event.reply('realmlist-data', realmlists);
+        } catch (error) {
+            event.reply('update-error', error.message);
+        }
+    });
+
+    ipcMain.on('update-realm', async (event, newAddress, index) => {
+        try {
+            const realmlists = await getRealmlists();
+            if (realmlists[index]) {
+                realmlists[index].address = newAddress;
+                await saveRealmlists(realmlists);
+                await updateWowRealmlist(newAddress);
+                event.reply('realmlist-data', realmlists);
+                event.reply('update-success', 'Realmlist mis à jour avec succès');
+            }
+        } catch (error) {
+            console.error('Erreur lors de la mise à jour du realm:', error);
+            event.reply('update-error', error.message);
+        }
+    });
+
+    ipcMain.on('activate-realm', async (event, index) => {
+        try {
+            const realmlists = await getRealmlists();
+            realmlists.forEach((realm, i) => {
+                realm.active = (i === index);
+            });
+            await saveRealmlists(realmlists);
+            if (realmlists[index]) {
+                await updateWowRealmlist(realmlists[index].address);
+            }
+            event.reply('realmlist-data', realmlists);
+            event.reply('update-success', 'Realm activé avec succès');
+        } catch (error) {
+            console.error('Erreur lors de l\'activation du realm:', error);
+            event.reply('update-error', error.message);
+        }
+    });
+
     ipcMain.on('load-config', (event) => {
         loadConfig();
         event.reply('config-loaded', { wowRealmlistPath, wowExePath, language: selectedLanguage });
     });
 
     ipcMain.on('update-realmlist-path', (event, path) => {
-        if (!path.endsWith('Data\\frFR')) {
-            if (fs.existsSync(path + '\\Data\\frFR')) {
-                path = path + '\\Data\\frFR';
-            }
-        }
-        wowRealmlistPath = path + '\\realmlist.wtf';
+        wowRealmlistPath = path.endsWith('realmlist.wtf') ? path : path + '\\realmlist.wtf';
         saveConfig();
         event.reply('update-success', 'Chemin du realmlist.wtf mis à jour avec succès');
     });
@@ -199,37 +252,20 @@ app.whenReady().then(() => {
         });
     });
 
-    ipcMain.on('get-realmlists', (event) => {
-        getRealmlists((realmlists) => {
-            event.reply('realmlist-data', realmlists);
-        });
-    });
-
-    ipcMain.on('activate-realm', (event, index) => {
-        getRealmlists((realmlists) => {
-            if (index >= 0 && index < realmlists.length) {
-                realmlists.forEach((realm, i) => {
-                    realm.active = (i === index);
-                });
-                
-                saveRealmlists(realmlists, (err) => {
-                    if (!err) {
-                        updateWowRealmlist(realmlists[index].address);
-                        event.reply('realmlist-data', realmlists);
-                    }
-                });
-            }
-        });
+    ipcMain.on('change-language', (event, lang) => {
+        selectedLanguage = lang;
+        saveConfig();
     });
 });
 
-// Nettoyage à la fermeture
 app.on('window-all-closed', () => {
     if (process.platform !== 'darwin') {
         app.quit();
     }
 });
 
-app.on('before-quit', () => {
-    mainWindow = null;
+app.on('activate', () => {
+    if (BrowserWindow.getAllWindows().length === 0) {
+        createWindow();
+    }
 });
