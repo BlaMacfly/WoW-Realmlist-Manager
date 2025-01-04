@@ -10,42 +10,42 @@
     "active": false
   },
   {
-    "address": "logon.warmane.com",
+    "address": "set realmlist logon.warmane.com",
     "disabled": false,
     "active": false
   },
   {
-    "address": "firestorm-servers.com",
+    "address": "set realmlist firestorm-servers.com",
     "disabled": false,
     "active": false
   },
   {
-    "address": "test",
+    "address": "set realmlist test",
     "disabled": true,
     "active": false
   },
   {
-    "address": "sethraliss.firestorm.com",
+    "address": "set realmlist sethraliss.firestorm.com",
     "disabled": false,
     "active": false
   },
   {
-    "address": "elune.way-of-elendil.fr",
+    "address": "set realmlist elune.way-of-elendi",
     "disabled": true,
     "active": false
   },
   {
-    "address": "wow.monster-wow.com",
+    "address": "set realmlist wow.monster-wow.com",
     "disabled": false,
     "active": false
   },
   {
-    "address": "heroes-wow.com",
+    "address": "set realmlist heroes-wow.com",
     "disabled": false,
     "active": false
   },
   {
-    "address": "wow-freakz.com",
+    "address": "set realmlist wow-freakz.com",
     "disabled": true,
     "active": false
   }

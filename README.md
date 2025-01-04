@@ -1,75 +1,66 @@
-<<<<<<< HEAD
-## 📸 Capture d'écran
-![Aperçu de l'application](assets/screenshot.png)
+# WoW Realmlist Manager
 
+Une application de bureau pour gérer facilement les serveurs World of Warcraft 3.3.5a.
 
-# RealmlistSwitcher 🎮
-**Gestionnaire d'adresses realmlist pour World of Warcraft 3.3.5**  
-Permet de modifier et de gérer facilement les adresses realmlist de votre client WoW. L'application offre une interface simple pour basculer entre plusieurs serveurs privés.
+## Fonctionnalités
 
----
+- Interface utilisateur moderne et intuitive
+- Gestion facile des adresses de serveurs
+- Activation/désactivation rapide des serveurs
+- Mise à jour automatique du fichier realmlist.wtf
+- Support multilingue (FR/EN/ES)
+- Effets sonores pour une meilleure expérience utilisateur
 
-## 🚀 Fonctionnalités
-- Modifier facilement les adresses realmlist.
-- Activer/désactiver une adresse en un clic.
-- Sélectionner le chemin vers le dossier `Data\frFR` du client WoW.
-- Interface simple et intuitive avec contrôle de volume pour les sons d'interaction.
+## Installation
 
----
-
-## 📥 Installation (Pour les utilisateurs)
-1. **Téléchargez la dernière version** de l'application depuis [la section Releases](https://github.com/TON-UTILISATEUR/RealmlistSwitcher/releases).  
-2. **Exécutez** le fichier `.exe` et suivez les instructions d'installation.  
-3. **Lancez l'application** et sélectionnez le chemin vers le dossier `Data\frFR` de votre client WoW 3.3.5.  
-
----
-
-## 🛠️ Pour les développeurs (Exécution locale)
-### Prérequis :
-- **Node.js** et **npm** installés.  
-- **Git** installé.
-
-### Cloner le projet :
+1. Assurez-vous d'avoir [Node.js](https://nodejs.org/) installé
+2. Clonez ce dépôt
+3. Installez les dépendances :
 ```bash
-git clone https://github.com/TON-UTILISATEUR/RealmlistSwitcher.git
-cd RealmlistSwitcher
 npm install
-npm start
-=======
-## 📸 Capture d'écran
-![Aperçu de l'application](assets/screenshot.png)
+```
 
+## Utilisation
 
-# RealmlistSwitcher 🎮
-**Gestionnaire d'adresses realmlist pour World of Warcraft 3.3.5**  
-Permet de modifier et de gérer facilement les adresses realmlist de votre client WoW. L'application offre une interface simple pour basculer entre plusieurs serveurs privés.
-
----
-
-## 🚀 Fonctionnalités
-- Modifier facilement les adresses realmlist.
-- Activer/désactiver une adresse en un clic.
-- Sélectionner le chemin vers le dossier `Data\frFR` du client WoW.
-- Interface simple et intuitive avec contrôle de volume pour les sons d'interaction.
-
----
-
-## 📥 Installation (Pour les utilisateurs)
-1. **Téléchargez la dernière version** de l'application depuis [la section Releases](https://github.com/TON-UTILISATEUR/RealmlistSwitcher/releases).  
-2. **Exécutez** le fichier `.exe` et suivez les instructions d'installation.  
-3. **Lancez l'application** et sélectionnez le chemin vers le dossier `Data\frFR` de votre client WoW 3.3.5.  
-
----
-
-## 🛠️ Pour les développeurs (Exécution locale)
-### Prérequis :
-- **Node.js** et **npm** installés.  
-- **Git** installé.
-
-### Cloner le projet :
+1. Lancez l'application :
 ```bash
-git clone https://github.com/TON-UTILISATEUR/RealmlistSwitcher.git
-cd RealmlistSwitcher
-npm install
 npm start
->>>>>>> c0c4825 (Initial release)
+```
+
+2. Sélectionnez le dossier d'installation de WoW 3.3.5a
+3. Ajoutez vos serveurs préférés
+4. Utilisez les boutons On/Off pour switcher entre les serveurs
+
+## Technologies utilisées
+
+- Electron.js
+- Node.js
+- HTML/CSS/JavaScript
+
+## Structure du projet
+
+```
+project-realmlist/
+├── assets/
+│   ├── style.css
+│   ├── script.js
+│   └── sounds/
+├── src/
+│   └── config.js
+├── main.js
+├── index.html
+└── realmlists.json
+```
+
+## Contribution
+
+Les contributions sont les bienvenues ! N'hésitez pas à :
+1. Fork le projet
+2. Créer une branche pour votre fonctionnalité
+3. Commiter vos changements
+4. Pousser vers la branche
+5. Ouvrir une Pull Request
+
+## License
+
+MIT License - voir le fichier LICENSE pour plus de détails
