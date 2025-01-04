@@ -1,18 +1,50 @@
 {
-  "name": "realmlist-switcher",
+  "name": "wow-realmlist-manager",
   "version": "1.0.0",
-  "description": "Application Electron pour la gestion des realmlists",
+  "description": "A World of Warcraft 3.3.5 realmlist manager",
   "main": "main.js",
   "scripts": {
     "start": "electron .",
-    "build": "electron-packager . RealmlistSwitcher --platform=win32 --arch=x64 --out=dist --overwrite --icon=icon.ico"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "electron-builder",
+    "pack": "electron-builder --dir",
+    "dist": "electron-builder",
+    "postinstall": "electron-builder install-app-deps"
+  },
+  "build": {
+    "appId": "com.wowrealmlist.app",
+    "productName": "WoW Realmlist Manager",
+    "directories": {
+      "output": "dist"
+    },
+    "win": {
+      "target": [
+        "nsis",
+        "portable"
+      ],
+      "icon": "assets/icon.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true
+    }
+  },
+  "keywords": [
+    "wow",
+    "world of warcraft",
+    "realmlist",
+    "manager",
+    "electron"
+  ],
+  "author": "Your Name",
+  "license": "MIT",
+  "devDependencies": {
+    "electron": "^27.1.0",
+    "electron-builder": "^24.6.4"
   },
   "dependencies": {
-    "howler": "^2.2.4"
-  },
-  "devDependencies": {
-    "electron": "^27.0.0",
-    "electron-packager": "^17.1.2"
+    "electron-store": "^8.1.0"
   }
 }
-
