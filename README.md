@@ -13,7 +13,7 @@ Un outil simple et efficace pour gérer votre fichier realmlist.wtf de World of 
 
 ## Capture d'écran
 
-![Interface du gestionnaire de realmlist](assets/screenshot.png)
+<img src="assets/screenshot.png" alt="Interface du gestionnaire de realmlist" width="600"/>
 
 ## Installation
 
