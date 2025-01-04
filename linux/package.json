@@ -1,23 +1,20 @@
 {
-  "name": "wow-realmlist-manager-linux",
+  "name": "wow-realmlist-manager",
   "version": "1.0.0",
   "description": "A World of Warcraft 3.3.5 realmlist manager for Linux",
   "main": "main.js",
+  "author": "BlaMacfly",
   "scripts": {
     "start": "electron .",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "electron-builder",
+    "build": "electron-builder --linux",
     "pack": "electron-builder --dir",
-    "dist": "electron-builder --linux --x64",
+    "dist": "electron-builder --linux",
     "postinstall": "electron-builder install-app-deps"
   },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/BlaMacfly/WoW-Realmlist-Manager.git"
-  },
   "build": {
-    "appId": "com.wowrealmlist.app.linux",
-    "productName": "WoW Realmlist Manager Linux",
+    "appId": "com.wowrealmlist.app",
+    "productName": "WoW Realmlist Manager",
     "directories": {
       "output": "dist"
     },
@@ -30,9 +27,7 @@
       "category": "Game",
       "icon": "assets/icon.png",
       "maintainer": "BlaMacfly",
-      "vendor": "BlaMacfly",
-      "synopsis": "World of Warcraft Realmlist Manager for Linux",
-      "description": "A tool to manage World of Warcraft realmlists on Linux systems"
+      "description": "A World of Warcraft 3.3.5 realmlist manager for Linux"
     },
     "deb": {
       "depends": [
@@ -47,13 +42,8 @@
       ]
     }
   },
-  "author": "BlaMacfly",
-  "license": "MIT",
   "devDependencies": {
-    "electron": "^28.0.0",
-    "electron-builder": "^24.9.1"
-  },
-  "dependencies": {
-    "electron-store": "^8.1.0"
+    "electron": "^27.3.11",
+    "electron-builder": "^24.13.3"
   }
 }

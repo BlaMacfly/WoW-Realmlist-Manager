@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestion des Realmlists</title>
+    <link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+    <h1 id="title">Modifier les adresses Realmlist</h1>
+    
+    <div>
+        <h2 id="path-label">Chemin du client WoW :</h2>
+        <input type="text" id="path-input" readonly placeholder="Sélectionnez le dossier Data\frFR">
+        <button id="select-path">Parcourir...</button>
+    </div>
+
+    <div>
+        <h2 id="exe-path-label">Chemin de WoW.exe :</h2>
+        <input type="text" id="exe-path-input" readonly placeholder="Sélectionnez wow.exe">
+        <button id="select-exe-path">Parcourir...</button>
+    </div>
+
+    <div>
+        <button id="launch-wow">Lancer WoW</button>
+    </div>
+
+    <!-- Sélecteur de langue -->
+    <div>
+        <label id="lang-label" for="language-selector">Langue :</label>
+        <select id="language-selector">
+            <option value="fr" selected>Français</option>
+            <option value="en">English</option>
+            <option value="es">Español</option>
+        </select>
+    </div>
+
+    <div id="realmlist-container"></div>
+
+    <script src="assets/script.js"></script>
+</body>
+</html>
+
+
+
+
+
+
+
+
+
