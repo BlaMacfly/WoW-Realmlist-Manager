@@ -1,66 +1,40 @@
 # WoW Realmlist Manager
 
-Une application de bureau pour gérer facilement les serveurs World of Warcraft 3.3.5a.
+Un outil simple et efficace pour gérer votre fichier realmlist.wtf de World of Warcraft 3.3.5a. Cette application vous permet de basculer facilement entre différents serveurs en un seul clic.
 
 ## Fonctionnalités
 
-- Interface utilisateur moderne et intuitive
-- Gestion facile des adresses de serveurs
-- Activation/désactivation rapide des serveurs
-- Mise à jour automatique du fichier realmlist.wtf
+- Basculement facile entre plusieurs serveurs
+- Lancement de WoW en un clic
+- Interface moderne et intuitive
 - Support multilingue (FR/EN/ES)
-- Effets sonores pour une meilleure expérience utilisateur
+- Sauvegarde automatique du fichier realmlist.wtf
+- Version portable disponible
+
+## Capture d'écran
+
+![Interface du gestionnaire de realmlist](assets/screenshot.png)
 
 ## Installation
 
-1. Assurez-vous d'avoir [Node.js](https://nodejs.org/) installé
-2. Clonez ce dépôt
-3. Installez les dépendances :
-```bash
-npm install
-```
+Vous pouvez au choix :
+- Télécharger et exécuter l'installateur (`WoW Realmlist Manager Setup 1.0.0.exe`)
+- Utiliser la version portable (`WoW Realmlist Manager 1.0.0.exe`)
 
 ## Utilisation
 
-1. Lancez l'application :
-```bash
-npm start
-```
+1. Définissez le chemin de votre répertoire WoW
+2. Ajoutez vos serveurs favoris
+3. Cliquez sur le bouton "On/Off" pour basculer entre les royaumes
+4. Utilisez le bouton "Launch WoW" pour démarrer le jeu
 
-2. Sélectionnez le dossier d'installation de WoW 3.3.5a
-3. Ajoutez vos serveurs préférés
-4. Utilisez les boutons On/Off pour switcher entre les serveurs
+## Développement
 
-## Technologies utilisées
-
-- Electron.js
+Construit avec :
+- Electron
 - Node.js
 - HTML/CSS/JavaScript
 
-## Structure du projet
+## Licence
 
-```
-project-realmlist/
-├── assets/
-│   ├── style.css
-│   ├── script.js
-│   └── sounds/
-├── src/
-│   └── config.js
-├── main.js
-├── index.html
-└── realmlists.json
-```
-
-## Contribution
-
-Les contributions sont les bienvenues ! N'hésitez pas à :
-1. Fork le projet
-2. Créer une branche pour votre fonctionnalité
-3. Commiter vos changements
-4. Pousser vers la branche
-5. Ouvrir une Pull Request
-
-## License
-
-MIT License - voir le fichier LICENSE pour plus de détails
+Licence MIT - voir le fichier LICENSE pour plus de détails

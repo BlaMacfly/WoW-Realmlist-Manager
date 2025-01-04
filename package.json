@@ -8,8 +8,12 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "electron-builder",
     "pack": "electron-builder --dir",
-    "dist": "electron-builder",
+    "dist": "electron-builder --win --x64",
     "postinstall": "electron-builder install-app-deps"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/BlaMacfly/WoW-Realmlist-Manager.git"
   },
   "build": {
     "appId": "com.wowrealmlist.app",
@@ -19,17 +23,37 @@
     },
     "win": {
       "target": [
-        "nsis",
-        "portable"
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "portable",
+          "arch": [
+            "x64"
+          ]
+        }
       ],
-      "icon": "assets/icon.ico"
+      "icon": "assets/icon.ico",
+      "signingHashAlgorithms": null,
+      "signAndEditExecutable": false
     },
     "nsis": {
       "oneClick": false,
       "allowToChangeInstallationDirectory": true,
       "createDesktopShortcut": true,
-      "createStartMenuShortcut": true
-    }
+      "createStartMenuShortcut": true,
+      "shortcutName": "WoW Realmlist Manager",
+      "installerIcon": "assets/icon.ico",
+      "uninstallerIcon": "assets/icon.ico"
+    },
+    "files": [
+      "**/*",
+      "assets/**/*"
+    ],
+    "asar": true
   },
   "keywords": [
     "wow",
@@ -38,11 +62,12 @@
     "manager",
     "electron"
   ],
-  "author": "Your Name",
+  "author": "BlaMacfly",
   "license": "MIT",
   "devDependencies": {
     "electron": "^27.1.0",
-    "electron-builder": "^24.6.4"
+    "electron-builder": "^24.6.4",
+    "png-to-ico": "^2.1.8"
   },
   "dependencies": {
     "electron-store": "^8.1.0"
