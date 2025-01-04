@@ -1,6 +1,6 @@
 {
   "name": "wow-realmlist-manager",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "A World of Warcraft 3.3.5 realmlist manager for Windows",
   "main": "main.js",
   "scripts": {
