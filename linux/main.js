@@ -181,14 +181,12 @@ async function saveRealmlists(realmlists) {
             }
 
             // Formater l'adresse si nécessaire
-            realmlists = realmlists.map(realm => {
-                // Supprimer "set realmlist" s'il est déjà présent
-                const cleanAddress = realm.address.replace(/^set\s+realmlist\s+/i, '');
-                return {
-                    ...realm,
-                    address: `set realmlist ${cleanAddress}`
-                };
-            });
+            realmlists = realmlists.map(realm => ({
+                ...realm,
+                address: realm.address.startsWith('set realmlist ') 
+                    ? realm.address 
+                    : `set realmlist ${realm.address}`
+            }));
 
             // Sauvegarder les nouvelles données
             const data = JSON.stringify(realmlists, null, 2);
@@ -236,9 +234,7 @@ async function updateWowRealmlist(newRealmlist) {
             return;
         }
 
-        // Supprimer "set realmlist" s'il est déjà présent dans newRealmlist
-        const cleanRealmlist = newRealmlist.replace(/^set\s+realmlist\s+/i, '');
-        const realmlistContent = `set realmlist ${cleanRealmlist}\n`;
+        const realmlistContent = `set realmlist ${newRealmlist}\n`;
         
         // Créer une sauvegarde avant modification
         const backupPath = wowRealmlistPath + '.backup';

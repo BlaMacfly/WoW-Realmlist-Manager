@@ -1,59 +1,45 @@
 {
-  "name": "wow-realmlist-manager-linux",
-  "version": "1.0.0",
+  "name": "wow-realmlist-manager",
+  "version": "1.1.0",
   "description": "A World of Warcraft 3.3.5 realmlist manager for Linux",
   "main": "main.js",
+  "homepage": "https://github.com/BlaMacfly/WoW-Realmlist-Manager",
   "scripts": {
-    "start": "electron .",
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "electron-builder",
-    "pack": "electron-builder --dir",
-    "dist": "electron-builder --linux --x64",
+    "start": "electron main.js",
+    "dist": "electron-builder --linux",
     "postinstall": "electron-builder install-app-deps"
   },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/BlaMacfly/WoW-Realmlist-Manager.git"
-  },
   "build": {
-    "appId": "com.wowrealmlist.app.linux",
-    "productName": "WoW Realmlist Manager Linux",
+    "appId": "com.wowrealmlistmanager.app",
+    "productName": "WoW Realmlist Manager",
     "directories": {
       "output": "dist"
     },
+    "files": [
+      "main.js",
+      "assets/**/*",
+      "index.html",
+      "realmlists.json",
+      "create-icon.js",
+      "!**/node_modules/**/*"
+    ],
     "linux": {
       "target": [
         "AppImage",
-        "deb",
-        "rpm"
+        "deb"
       ],
       "category": "Game",
-      "icon": "assets/icon.png",
-      "maintainer": "BlaMacfly",
-      "vendor": "BlaMacfly",
-      "synopsis": "World of Warcraft Realmlist Manager for Linux",
-      "description": "A tool to manage World of Warcraft realmlists on Linux systems"
-    },
-    "deb": {
-      "depends": [
-        "wine",
-        "winetricks"
-      ]
-    },
-    "rpm": {
-      "depends": [
-        "wine",
-        "winetricks"
-      ]
+      "icon": "assets/new-icon.png",
+      "maintainer": "BlaMacfly <blamacfly@gmail.com>"
     }
   },
-  "author": "BlaMacfly",
+  "author": {
+    "name": "BlaMacfly",
+    "email": "blamacfly@gmail.com"
+  },
   "license": "MIT",
   "devDependencies": {
-    "electron": "^28.0.0",
+    "electron": "^25.9.8",
     "electron-builder": "^24.9.1"
-  },
-  "dependencies": {
-    "electron-store": "^8.1.0"
   }
 }

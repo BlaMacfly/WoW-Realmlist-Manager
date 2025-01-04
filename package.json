@@ -4,11 +4,11 @@
   "description": "A World of Warcraft 3.3.5 realmlist manager for Windows",
   "main": "main.js",
   "scripts": {
-    "start": "electron .",
+    "start": "electron main.js",
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "electron-builder",
     "pack": "electron-builder --dir",
-    "dist": "electron-builder --win --x64",
+    "dist": "electron-builder",
     "postinstall": "electron-builder install-app-deps"
   },
   "repository": {
@@ -16,10 +16,19 @@
     "url": "https://github.com/BlaMacfly/WoW-Realmlist-Manager.git"
   },
   "build": {
-    "appId": "com.wowrealmlist.app",
+    "appId": "com.wowrealmlistmanager.app",
     "productName": "WoW Realmlist Manager",
     "directories": {
       "output": "dist"
+    },
+    "linux": {
+      "target": [
+        "AppImage",
+        "deb"
+      ],
+      "maintainer": "BlaMacfly <blamacfly@gmail.com>",
+      "category": "Game",
+      "icon": "assets/icon.png"
     },
     "win": {
       "target": [
@@ -72,12 +81,18 @@
     "manager",
     "electron"
   ],
-  "author": "BlaMacfly",
+  "author": {
+    "name": "BlaMacfly",
+    "email": "blamacfly@gmail.com"
+  },
+  "homepage": "https://github.com/BlaMacfly/WoW-Realmlist-Manager",
   "license": "MIT",
   "devDependencies": {
-    "electron": "^25.8.4",
-    "electron-builder": "^24.6.4",
-    "png-to-ico": "^2.1.8"
+    "electron": "^25.9.8",
+    "electron-builder": "^24.9.1",
+    "jimp": "^1.6.0",
+    "png-to-ico": "^2.1.8",
+    "sharp": "^0.33.5"
   },
   "dependencies": {
     "electron-store": "^8.1.0"
