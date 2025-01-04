@@ -95,6 +95,9 @@ function createRealmElement(realm, index) {
     input.type = 'text';
     input.value = realm.address;
     input.id = `realm-input-${index}`;
+    
+    // Stocker la valeur originale
+    input.dataset.originalValue = realm.address;
 
     const modifyButton = document.createElement('button');
     modifyButton.innerText = translations[selectedLanguage].modify;
@@ -104,12 +107,25 @@ function createRealmElement(realm, index) {
     toggleButton.innerText = realm.active ? 'On' : 'Off';
     toggleButton.style.backgroundColor = realm.active ? 'green' : 'red';
 
+    // Gestionnaire pour l'input
+    input.addEventListener('input', () => {
+        // Activer/désactiver le bouton Modifier en fonction des changements
+        const hasChanged = input.value !== input.dataset.originalValue;
+        modifyButton.disabled = !hasChanged;
+        modifyButton.style.opacity = hasChanged ? '1' : '0.5';
+    });
+
     // Utilisation de la délégation d'événements
     div.addEventListener('click', (e) => {
-        if (e.target === modifyButton) {
+        if (e.target === modifyButton && !modifyButton.disabled) {
             sounds.click.play();
             const updatedAddress = input.value;
             ipcRenderer.send('update-realm', updatedAddress, index);
+            // Mettre à jour la valeur originale
+            input.dataset.originalValue = updatedAddress;
+            // Désactiver le bouton après la modification
+            modifyButton.disabled = true;
+            modifyButton.style.opacity = '0.5';
         } else if (e.target === toggleButton) {
             sounds.toggle.play();
             ipcRenderer.send('activate-realm', index);
@@ -119,6 +135,11 @@ function createRealmElement(realm, index) {
     div.appendChild(input);
     div.appendChild(modifyButton);
     div.appendChild(toggleButton);
+    
+    // Désactiver initialement le bouton Modifier
+    modifyButton.disabled = true;
+    modifyButton.style.opacity = '0.5';
+    
     return div;
 }
 
@@ -173,7 +194,18 @@ ipcRenderer.on('config-loaded', (event, config) => {
 });
 
 ipcRenderer.on('realmlist-data', (event, realmlists) => {
+    console.log('Mise à jour des realmlists reçue:', realmlists);
     updateRealmList(realmlists);
+});
+
+ipcRenderer.on('update-success', (event, message) => {
+    console.log('Mise à jour réussie:', message);
+});
+
+ipcRenderer.on('update-error', (event, error) => {
+    console.error('Erreur de mise à jour:', error);
+    // Recharger les données en cas d'erreur
+    ipcRenderer.send('get-realmlists');
 });
 
 ipcRenderer.on('selected-wow-path', (event, path) => {

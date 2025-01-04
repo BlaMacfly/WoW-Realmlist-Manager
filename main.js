@@ -4,11 +4,35 @@ const path = require('path');
 const os = require('os');
 
 let mainWindow;
-const realmlistPath = path.join(__dirname, 'realmlists.json');
-const configPath = path.join(__dirname, 'config.json');
+const APP_DATA_PATH = path.join(app.getPath('userData'), 'data');
+const realmlistPath = path.join(APP_DATA_PATH, 'realmlists.json');
+const configPath = path.join(APP_DATA_PATH, 'config.json');
 let wowRealmlistPath = '';
 let wowExePath = '';
 let selectedLanguage = 'fr';
+
+// S'assurer que le dossier data existe
+if (!fs.existsSync(APP_DATA_PATH)) {
+    fs.mkdirSync(APP_DATA_PATH, { recursive: true });
+}
+
+// Copier le fichier realmlists.json par défaut s'il n'existe pas
+if (!fs.existsSync(realmlistPath)) {
+    const defaultRealmlistPath = path.join(__dirname, 'realmlists.json');
+    if (fs.existsSync(defaultRealmlistPath)) {
+        fs.copyFileSync(defaultRealmlistPath, realmlistPath);
+    } else {
+        // Créer un fichier realmlists.json par défaut
+        const defaultRealmlists = [
+            {
+                "address": "set realmlist logon.wow-europe.com",
+                "disabled": false,
+                "active": true
+            }
+        ];
+        fs.writeFileSync(realmlistPath, JSON.stringify(defaultRealmlists, null, 2));
+    }
+}
 
 // Désactiver l'accélération matérielle
 app.disableHardwareAcceleration();
@@ -120,14 +144,10 @@ function saveConfig() {
 }
 
 // Lire les adresses realm avec cache
-function getRealmlists() {
+async function getRealmlists() {
     return new Promise((resolve, reject) => {
-        const now = Date.now();
-        if (realmlistsCache && (now - lastCacheTime < CACHE_DURATION)) {
-            resolve(realmlistsCache);
-            return;
-        }
-
+        console.log('Lecture des realmlists depuis:', realmlistPath);
+        
         fs.readFile(realmlistPath, 'utf-8', (err, data) => {
             if (err) {
                 console.error("Erreur de lecture de realmlists.json :", err);
@@ -135,9 +155,11 @@ function getRealmlists() {
                 return;
             }
             try {
-                realmlistsCache = JSON.parse(data);
-                lastCacheTime = now;
-                resolve(realmlistsCache);
+                const realmlists = JSON.parse(data);
+                console.log('Realmlists chargés:', realmlists);
+                realmlistsCache = JSON.parse(JSON.stringify(realmlists)); // Copie profonde
+                lastCacheTime = Date.now();
+                resolve(realmlists);
             } catch (parseError) {
                 console.error("Erreur de parsing de realmlists.json :", parseError);
                 reject(parseError);
@@ -148,32 +170,53 @@ function getRealmlists() {
 
 // Enregistrer les modifications de realmlists avec vérification
 async function saveRealmlists(realmlists) {
-    const data = JSON.stringify(realmlists, null, 2);
+    console.log('Tentative de sauvegarde des realmlists:', realmlists);
     
     return new Promise((resolve, reject) => {
-        fs.writeFile(realmlistPath, data, async (err) => {
-            if (err) {
-                console.error("Erreur lors de la sauvegarde des realmlists:", err);
-                reject(err);
-                return;
+        try {
+            // Créer une sauvegarde avant modification
+            const backupPath = realmlistPath + '.backup';
+            if (fs.existsSync(realmlistPath)) {
+                fs.copyFileSync(realmlistPath, backupPath);
             }
 
+            // Formater l'adresse si nécessaire
+            realmlists = realmlists.map(realm => ({
+                ...realm,
+                address: realm.address.startsWith('set realmlist ') 
+                    ? realm.address 
+                    : `set realmlist ${realm.address}`
+            }));
+
+            // Sauvegarder les nouvelles données
+            const data = JSON.stringify(realmlists, null, 2);
+            fs.writeFileSync(realmlistPath, data, 'utf-8');
+
             // Vérifier que les données ont été correctement écrites
-            try {
-                const savedData = await fs.promises.readFile(realmlistPath, 'utf-8');
-                const savedRealmlists = JSON.parse(savedData);
-                
-                if (JSON.stringify(savedRealmlists) === JSON.stringify(realmlists)) {
-                    realmlistsCache = realmlists;
-                    lastCacheTime = Date.now();
-                    resolve(true);
-                } else {
-                    reject(new Error("Les données sauvegardées ne correspondent pas"));
+            const savedData = fs.readFileSync(realmlistPath, 'utf-8');
+            const savedRealmlists = JSON.parse(savedData);
+
+            if (JSON.stringify(savedRealmlists) === JSON.stringify(realmlists)) {
+                // Mettre à jour le cache immédiatement avec une copie profonde
+                realmlistsCache = JSON.parse(JSON.stringify(realmlists));
+                lastCacheTime = Date.now();
+                resolve(true);
+            } else {
+                // Restaurer la sauvegarde en cas d'erreur
+                if (fs.existsSync(backupPath)) {
+                    fs.copyFileSync(backupPath, realmlistPath);
                 }
-            } catch (verifyError) {
-                reject(verifyError);
+                reject(new Error("Les données sauvegardées ne correspondent pas"));
             }
-        });
+
+            // Nettoyer la sauvegarde
+            if (fs.existsSync(backupPath)) {
+                fs.unlinkSync(backupPath);
+            }
+        } catch (error) {
+            console.error("Erreur lors de la sauvegarde des realmlists:", error);
+            reject(error);
+        }
     });
 }
 
@@ -262,18 +305,48 @@ app.whenReady().then(() => {
     });
 
     ipcMain.on('update-realm', async (event, newAddress, index) => {
+        console.log('Demande de mise à jour du realm:', { newAddress, index });
+        
         try {
             const realmlists = await getRealmlists();
-            if (realmlists[index]) {
-                realmlists[index].address = newAddress;
-                await saveRealmlists(realmlists);
-                await updateWowRealmlist(newAddress);
-                event.reply('realmlist-data', realmlists);
-                event.reply('update-success', 'Realmlist mis à jour avec succès');
+            console.log('Realmlists actuels:', realmlists);
+            
+            if (!realmlists[index]) {
+                throw new Error("Index de realmlist invalide");
             }
+
+            // Formater l'adresse si nécessaire
+            const formattedAddress = newAddress.startsWith('set realmlist ') 
+                ? newAddress 
+                : `set realmlist ${newAddress}`;
+
+            console.log('Ancien realm:', realmlists[index]);
+            realmlists[index].address = formattedAddress;
+            console.log('Nouveau realm:', realmlists[index]);
+
+            // Sauvegarder d'abord les modifications dans le fichier realmlists.json
+            await saveRealmlists(realmlists);
+            console.log('Sauvegarde des realmlists réussie');
+
+            // Puis mettre à jour le fichier realmlist.wtf
+            await updateWowRealmlist(formattedAddress);
+            console.log('Mise à jour du realmlist.wtf réussie');
+
+            // Mettre à jour l'interface avec les données sauvegardées
+            const updatedRealmlists = await getRealmlists();
+            event.reply('realmlist-data', updatedRealmlists);
+            event.reply('update-success', 'Realmlist mis à jour avec succès');
         } catch (error) {
             console.error('Erreur lors de la mise à jour du realm:', error);
             event.reply('update-error', error.message);
+            
+            // Recharger les données en cas d'erreur
+            try {
+                const currentRealmlists = await getRealmlists();
+                event.reply('realmlist-data', currentRealmlists);
+            } catch (reloadError) {
+                console.error('Erreur lors du rechargement des realmlists:', reloadError);
+            }
         }
     });
 
