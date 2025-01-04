@@ -1,7 +1,7 @@
 {
   "name": "wow-realmlist-manager",
   "version": "1.0.0",
-  "description": "A World of Warcraft 3.3.5 realmlist manager",
+  "description": "A World of Warcraft 3.3.5 realmlist manager for Windows",
   "main": "main.js",
   "scripts": {
     "start": "electron .",
@@ -38,7 +38,8 @@
       ],
       "icon": "assets/icon.ico",
       "signingHashAlgorithms": null,
-      "signAndEditExecutable": false
+      "signAndEditExecutable": false,
+      "requestedExecutionLevel": "highestAvailable"
     },
     "nsis": {
       "oneClick": false,
@@ -47,7 +48,16 @@
       "createStartMenuShortcut": true,
       "shortcutName": "WoW Realmlist Manager",
       "installerIcon": "assets/icon.ico",
-      "uninstallerIcon": "assets/icon.ico"
+      "uninstallerIcon": "assets/icon.ico",
+      "installerHeaderIcon": "assets/icon.ico",
+      "menuCategory": "Games",
+      "displayLanguageSelector": true,
+      "language": "1036",
+      "runAfterFinish": true,
+      "perMachine": true
+    },
+    "portable": {
+      "artifactName": "WoW-Realmlist-Manager-Portable.exe"
     },
     "files": [
       "**/*",
@@ -65,7 +75,7 @@
   "author": "BlaMacfly",
   "license": "MIT",
   "devDependencies": {
-    "electron": "^27.1.0",
+    "electron": "^25.8.4",
     "electron-builder": "^24.6.4",
     "png-to-ico": "^2.1.8"
   },
