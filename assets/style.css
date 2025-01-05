@@ -1,8 +1,26 @@
 body {
+    background-image: url('images/background2.jpg');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
     background-color: #0c1a26; /* Bleu nuit glacial */
     color: #d1d5db; /* Gris clair pour une bonne lisibilité */
     font-family: 'Morpheus', 'Arial', sans-serif;
     margin: 20px;
+    min-height: 100vh;
+    position: relative;
+}
+
+body::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(12, 26, 38, 0.75); /* Overlay légèrement plus foncé pour cette image */
+    z-index: -1;
 }
 
 h1 {
