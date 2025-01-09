@@ -1,51 +1,47 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html>
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gestion des Realmlists</title>
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'">
+    <title>WoW Realmlist Manager</title>
     <link rel="stylesheet" href="assets/style.css">
 </head>
 <body>
-    <h1 id="title">Modifier les adresses Realmlist</h1>
-    
-    <div>
-        <h2 id="path-label">Chemin du client WoW :</h2>
-        <input type="text" id="path-input" readonly placeholder="Sélectionnez le dossier Data\frFR">
-        <button id="select-path">Parcourir...</button>
+    <div class="titlebar">
+        <div class="window-title" data-translate="title">Gestionnaire de Realmlist</div>
+        <div class="window-controls">
+            <button id="minimize-btn">─</button>
+            <button id="close-btn">×</button>
+        </div>
     </div>
 
-    <div>
-        <h2 id="exe-path-label">Chemin de WoW.exe :</h2>
-        <input type="text" id="exe-path-input" readonly placeholder="Sélectionnez wow.exe">
-        <button id="select-exe-path">Parcourir...</button>
-    </div>
+    <div class="content">
+        <div class="config-section">
+            <div class="path-group">
+                <label for="path-input" data-translate="pathLabel">Chemin vers WoW.exe:</label>
+                <input type="text" id="path-input" readonly>
+                <button id="select-path" data-translate="browse">Parcourir</button>
+            </div>
+        </div>
 
-    <div>
-        <button id="launch-wow">Lancer WoW</button>
-    </div>
+        <div class="actions">
+            <button id="add-realm" data-translate="addRealm">Ajouter un realm</button>
+            <button id="launch-wow" data-translate="launchWow">Lancer WoW</button>
+            <button id="open-addon" data-translate="openAddons">Dossier Addons</button>
+        </div>
 
-    <!-- Sélecteur de langue -->
-    <div>
-        <label id="lang-label" for="language-selector">Langue :</label>
-        <select id="language-selector">
-            <option value="fr" selected>Français</option>
-            <option value="en">English</option>
-            <option value="es">Español</option>
-        </select>
-    </div>
+        <div class="realm-list" id="realm-list">
+            <!-- Les realms seront ajoutés ici dynamiquement -->
+        </div>
 
-    <div id="realmlist-container"></div>
+        <div class="language-select">
+            <select id="language-select">
+                <option value="fr">Français</option>
+                <option value="en">English</option>
+            </select>
+        </div>
+    </div>
 
     <script src="assets/script.js"></script>
 </body>
 </html>
-
-
-
-
-
-
-
-
-

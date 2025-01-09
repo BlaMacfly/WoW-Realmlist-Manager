@@ -1,19 +1,14 @@
 {
   "name": "wow-realmlist-manager",
-  "version": "1.1.0",
-  "description": "A World of Warcraft 3.3.5 realmlist manager for Windows",
+  "version": "2.0.0",
+  "description": "WoW Realmlist Manager",
   "main": "main.js",
   "scripts": {
-    "start": "electron main.js",
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "electron-builder",
+    "start": "electron .",
+    "build": "electron-builder --config.win.signAndEditExecutable=false",
     "pack": "electron-builder --dir",
     "dist": "electron-builder",
-    "postinstall": "electron-builder install-app-deps"
-  },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/BlaMacfly/WoW-Realmlist-Manager.git"
+    "build:linux": "electron-builder --linux deb"
   },
   "build": {
     "appId": "com.wowrealmlistmanager.app",
@@ -21,78 +16,31 @@
     "directories": {
       "output": "dist"
     },
-    "linux": {
-      "target": [
-        "AppImage",
-        "deb"
-      ],
-      "maintainer": "BlaMacfly <blamacfly@gmail.com>",
-      "category": "Game",
-      "icon": "assets/icon.png"
-    },
     "win": {
       "target": [
-        {
-          "target": "nsis",
-          "arch": [
-            "x64"
-          ]
-        },
-        {
-          "target": "portable",
-          "arch": [
-            "x64"
-          ]
-        }
+        "portable"
       ],
-      "icon": "assets/icon.ico",
-      "signingHashAlgorithms": null,
-      "signAndEditExecutable": false,
-      "requestedExecutionLevel": "highestAvailable"
+      "icon": "icon.png"
     },
-    "nsis": {
-      "oneClick": false,
-      "allowToChangeInstallationDirectory": true,
-      "createDesktopShortcut": true,
-      "createStartMenuShortcut": true,
-      "shortcutName": "WoW Realmlist Manager",
-      "installerIcon": "assets/icon.ico",
-      "uninstallerIcon": "assets/icon.ico",
-      "installerHeaderIcon": "assets/icon.ico",
-      "menuCategory": "Games",
-      "displayLanguageSelector": true,
-      "language": "1036",
-      "runAfterFinish": true,
-      "perMachine": true
-    },
-    "portable": {
-      "artifactName": "WoW-Realmlist-Manager-Portable.exe"
+    "linux": {
+      "target": ["deb"],
+      "icon": "assets/images/icon.png",
+      "category": "Game",
+      "maintainer": "WoW Realmlist Manager",
+      "description": "A tool to manage WoW realm lists"
     },
     "files": [
       "**/*",
-      "assets/**/*"
-    ],
-    "asar": true
+      "assets/*",
+      "!assets/images/icon.ico",
+      "!assets/images/icon.png"
+    ]
   },
-  "keywords": [
-    "wow",
-    "world of warcraft",
-    "realmlist",
-    "manager",
-    "electron"
-  ],
-  "author": {
-    "name": "BlaMacfly",
-    "email": "blamacfly@gmail.com"
-  },
-  "homepage": "https://github.com/BlaMacfly/WoW-Realmlist-Manager",
-  "license": "MIT",
+  "author": "",
+  "license": "ISC",
   "devDependencies": {
     "electron": "^25.9.8",
-    "electron-builder": "^24.9.1",
-    "jimp": "^1.6.0",
-    "png-to-ico": "^2.1.8",
-    "sharp": "^0.33.5"
+    "electron-builder": "^24.9.1"
   },
   "dependencies": {
     "electron-store": "^8.1.0"

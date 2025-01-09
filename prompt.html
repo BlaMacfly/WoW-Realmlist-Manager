@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Ajouter un realm</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: black;
+            color: white;
+            margin: 0;
+            padding: 20px;
+            user-select: none;
+        }
+
+        .container {
+            border: 2px solid #b39248;
+            padding: 15px;
+            border-radius: 5px;
+        }
+
+        .input-group {
+            margin-bottom: 15px;
+        }
+
+        input {
+            width: 100%;
+            padding: 8px;
+            margin-top: 5px;
+            border: 1px solid #b39248;
+            background-color: #1a1a1a;
+            color: white;
+            border-radius: 3px;
+        }
+
+        .buttons {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+
+        button {
+            padding: 8px 15px;
+            border: 1px solid #b39248;
+            background-color: black;
+            color: #b39248;
+            cursor: pointer;
+            border-radius: 3px;
+            transition: all 0.2s;
+        }
+
+        button:hover {
+            background-color: #b39248;
+            color: black;
+        }
+
+        #prompt-message {
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div id="prompt-message"></div>
+        <div class="input-group">
+            <input type="text" id="prompt-input" autofocus>
+        </div>
+        <div class="buttons">
+            <button id="cancel-button">Annuler</button>
+            <button id="ok-button">OK</button>
+        </div>
+    </div>
+
+    <script>
+        const { ipcRenderer } = require('electron');
+        
+        const promptInput = document.getElementById('prompt-input');
+        const promptMessage = document.getElementById('prompt-message');
+        const okButton = document.getElementById('ok-button');
+        const cancelButton = document.getElementById('cancel-button');
+
+        ipcRenderer.on('set-prompt', (event, message) => {
+            promptMessage.textContent = message;
+        });
+
+        okButton.addEventListener('click', () => {
+            ipcRenderer.send('prompt-response', promptInput.value);
+        });
+
+        cancelButton.addEventListener('click', () => {
+            ipcRenderer.send('prompt-cancel');
+        });
+
+        promptInput.addEventListener('keyup', (event) => {
+            if (event.key === 'Enter') {
+                ipcRenderer.send('prompt-response', promptInput.value);
+            } else if (event.key === 'Escape') {
+                ipcRenderer.send('prompt-cancel');
+            }
+        });
+    </script>
+</body>
+</html>

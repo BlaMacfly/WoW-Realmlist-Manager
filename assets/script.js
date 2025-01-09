@@ -1,234 +1,265 @@
-const { ipcRenderer, shell } = require('electron');
+const { ipcRenderer } = require('electron');
 
-const translations = {
-    fr: {
-        title: 'Modifier les adresses Realmlist',
-        pathLabel: 'Chemin du Realmlist WoW :',
-        exePathLabel: 'Chemin de WoW.exe :',
-        browse: 'Parcourir...',
-        langLabel: 'Langue :',
-        modify: 'Modifier',
-        launch: 'Lancer WoW'
-    },
-    en: {
-        title: 'Edit Realmlist Addresses',
-        pathLabel: 'WoW Realmlist Path:',
-        exePathLabel: 'WoW.exe Path:',
-        browse: 'Browse...',
-        langLabel: 'Language:',
-        modify: 'Edit',
-        launch: 'Launch WoW'
-    },
-    es: {
-        title: 'Editar Direcciones de Realmlist',
-        pathLabel: 'Ruta de la lista de reinos de WoW:',
-        exePathLabel: 'Ruta de WoW.exe:',
-        browse: 'Explorar...',
-        langLabel: 'Idioma:',
-        modify: 'Editar',
-        launch: 'Iniciar WoW'
-    }
-};
-
-let selectedLanguage = 'fr';
-let wowExePath = '';
-
-// Debounce function pour limiter les appels fréquents
-function debounce(func, wait) {
-    let timeout;
-    return function executedFunction(...args) {
-        const later = () => {
-            clearTimeout(timeout);
-            func(...args);
-        };
-        clearTimeout(timeout);
-        timeout = setTimeout(later, wait);
-    };
-}
-
-// Précharger les sons pour de meilleures performances
+// Sons
 const sounds = {
-    launch: new Audio('assets/launch.mp3'),
-    browse: new Audio('assets/browse.mp3'),
-    click: new Audio('assets/click.mp3'),
-    toggle: new Audio('assets/toggle.mp3')
+    click: new Audio('assets/sounds/click.mp3'),
+    launch: new Audio('assets/sounds/launch.mp3'),
+    toggle: new Audio('assets/sounds/toggle.mp3'),
+    browse: new Audio('assets/sounds/browse.mp3')
 };
 
-// Précharger les sons
-Object.values(sounds).forEach(sound => {
-    sound.load();
-    sound.volume = 0.5; // Volume par défaut
-});
+// Éléments de la fenêtre
+const minimizeBtn = document.getElementById('minimize-btn');
+const closeBtn = document.getElementById('close-btn');
 
-// Cache des éléments DOM fréquemment utilisés
-const domElements = {
-    container: document.getElementById('realmlist-container'),
-    pathInput: document.getElementById('path-input'),
-    exePathInput: document.getElementById('exe-path-input'),
-    languageSelector: document.getElementById('language-selector')
-};
-
-function setLanguage(lang) {
-    selectedLanguage = lang;
-    const t = translations[lang];
-    document.getElementById('title').innerText = t.title;
-    document.getElementById('path-label').innerText = t.pathLabel;
-    document.getElementById('exe-path-label').innerText = t.exePathLabel;
-    document.getElementById('select-path').innerText = t.browse;
-    document.getElementById('select-exe-path').innerText = t.browse;
-    document.getElementById('lang-label').innerText = t.langLabel;
-    document.getElementById('launch-wow').innerText = t.launch;
-
-    document.querySelectorAll('.modify-button').forEach(button => {
-        button.innerText = t.modify;
+// Contrôles de fenêtre
+if (minimizeBtn) {
+    minimizeBtn.addEventListener('click', () => {
+        playSound('click');
+        ipcRenderer.send('minimize-window');
     });
 }
 
-setLanguage('fr');
+if (closeBtn) {
+    closeBtn.addEventListener('click', () => {
+        playSound('click');
+        ipcRenderer.send('close-window');
+    });
+}
 
-// Gestionnaire d'événements optimisé pour la liste des realms
+// Traductions
+const translations = {
+    fr: {
+        title: 'Gestionnaire de Realmlist',
+        addRealm: 'Ajouter un realm',
+        launchWow: 'Lancer WoW',
+        openAddons: 'Dossier Addons',
+        browse: 'Parcourir',
+        activate: 'Activer',
+        edit: 'Éditer',
+        delete: 'Supprimer',
+        errors: {
+            max: 'Nombre maximum de realms atteint (5)',
+            save: 'Erreur lors de la sauvegarde des realms',
+            load: 'Erreur lors du chargement des realms',
+            selectWow: 'Veuillez sélectionner WoW.exe',
+            addons: 'Erreur lors de l\'ouverture du dossier des addons'
+        },
+        enterRealmAddress: 'Entrez l\'adresse du realm:'
+    },
+    en: {
+        title: 'Realmlist Manager',
+        addRealm: 'Add realm',
+        launchWow: 'Launch WoW',
+        openAddons: 'Addons Folder',
+        browse: 'Browse',
+        activate: 'Activate',
+        edit: 'Edit',
+        delete: 'Delete',
+        errors: {
+            max: 'Maximum number of realms reached (5)',
+            save: 'Error saving realms',
+            load: 'Error loading realms',
+            selectWow: 'Please select WoW.exe',
+            addons: 'Error opening addons folder'
+        },
+        enterRealmAddress: 'Enter realm address:'
+    }
+};
+
+// Éléments DOM
+const pathInput = document.getElementById('path-input');
+const selectPathBtn = document.getElementById('select-path');
+const addRealmBtn = document.getElementById('add-realm');
+const realmList = document.getElementById('realm-list');
+const languageSelect = document.getElementById('language-select');
+const launchWowBtn = document.getElementById('launch-wow');
+const openAddonBtn = document.getElementById('open-addon');
+
+// Langue
+let currentLanguage = localStorage.getItem('language') || 'fr';
+
+function updateLanguage() {
+    document.querySelectorAll('[data-translate]').forEach(element => {
+        const key = element.dataset.translate;
+        if (translations[currentLanguage][key]) {
+            element.textContent = translations[currentLanguage][key];
+        }
+    });
+}
+
+// Affichage d'erreur
+function showError(message) {
+    const errorDiv = document.createElement('div');
+    errorDiv.className = 'error-message';
+    errorDiv.textContent = message;
+    document.body.appendChild(errorDiv);
+    setTimeout(() => errorDiv.remove(), 3000);
+}
+
+// Sélection du chemin WoW
+if (selectPathBtn) {
+    selectPathBtn.addEventListener('click', async () => {
+        playSound('browse');
+        try {
+            const path = await ipcRenderer.invoke('select-wow-path');
+            if (path) {
+                pathInput.value = path;
+            }
+        } catch (error) {
+            showError(error.message);
+        }
+    });
+}
+
+// Fonction pour créer un élément realm
 function createRealmElement(realm, index) {
     const div = document.createElement('div');
-    div.className = 'realm-item';
+    div.className = `realm-item${realm.active ? ' active' : ''}`;
 
     const input = document.createElement('input');
     input.type = 'text';
+    input.className = 'realm-address';
     input.value = realm.address;
-    input.id = `realm-input-${index}`;
-    
-    // Stocker la valeur originale
-    input.dataset.originalValue = realm.address;
+    input.readOnly = true;
 
-    const modifyButton = document.createElement('button');
-    modifyButton.innerText = translations[selectedLanguage].modify;
-    modifyButton.className = 'modify-button';
+    const controls = document.createElement('div');
+    controls.className = 'realm-controls';
 
-    const toggleButton = document.createElement('button');
-    toggleButton.innerText = realm.active ? 'On' : 'Off';
-    toggleButton.style.backgroundColor = realm.active ? 'green' : 'red';
+    const toggleBtn = document.createElement('button');
+    toggleBtn.textContent = realm.active ? 'ON' : 'OFF';
+    toggleBtn.onclick = () => {
+        playSound('click');
+        toggleRealm(index);
+    };
 
-    // Gestionnaire pour l'input
-    input.addEventListener('input', () => {
-        // Activer/désactiver le bouton Modifier en fonction des changements
-        const hasChanged = input.value !== input.dataset.originalValue;
-        modifyButton.disabled = !hasChanged;
-        modifyButton.style.opacity = hasChanged ? '1' : '0.5';
-    });
+    const deleteBtn = document.createElement('button');
+    deleteBtn.textContent = translations[currentLanguage].delete;
+    deleteBtn.onclick = () => {
+        playSound('click');
+        deleteRealm(index);
+    };
 
-    // Utilisation de la délégation d'événements
-    div.addEventListener('click', (e) => {
-        if (e.target === modifyButton && !modifyButton.disabled) {
-            sounds.click.play();
-            const updatedAddress = input.value;
-            ipcRenderer.send('update-realm', updatedAddress, index);
-            // Mettre à jour la valeur originale
-            input.dataset.originalValue = updatedAddress;
-            // Désactiver le bouton après la modification
-            modifyButton.disabled = true;
-            modifyButton.style.opacity = '0.5';
-        } else if (e.target === toggleButton) {
-            sounds.toggle.play();
-            ipcRenderer.send('activate-realm', index);
-        }
-    });
+    controls.appendChild(toggleBtn);
+    controls.appendChild(deleteBtn);
 
     div.appendChild(input);
-    div.appendChild(modifyButton);
-    div.appendChild(toggleButton);
-    
-    // Désactiver initialement le bouton Modifier
-    modifyButton.disabled = true;
-    modifyButton.style.opacity = '0.5';
-    
+    div.appendChild(controls);
+
     return div;
 }
 
-// Mise à jour optimisée de la liste des realms
-const updateRealmList = debounce((realmlists) => {
-    const fragment = document.createDocumentFragment();
-    realmlists.forEach((realm, index) => {
-        fragment.appendChild(createRealmElement(realm, index));
+// Affichage des realms
+async function displayRealms() {
+    try {
+        const realms = await ipcRenderer.invoke('get-realmlists');
+        realmList.innerHTML = '';
+        realms.forEach((realm, index) => {
+            realmList.appendChild(createRealmElement(realm, index));
+        });
+    } catch (error) {
+        showError(translations[currentLanguage].errors.load);
+    }
+}
+
+// Fonction pour ajouter un nouveau realm
+async function addRealm() {
+    try {
+        playSound('toggle');
+        const result = await ipcRenderer.invoke('show-prompt-dialog', translations[currentLanguage].enterRealmAddress);
+        if (result) {
+            await ipcRenderer.invoke('add-realm', result);
+            await displayRealms();
+        }
+    } catch (error) {
+        showError(error.message);
+    }
+}
+
+// Fonction pour basculer un realm
+async function toggleRealm(index) {
+    try {
+        await ipcRenderer.invoke('toggle-realm', index);
+        await displayRealms();
+    } catch (error) {
+        showError(translations[currentLanguage].errors.toggle);
+    }
+}
+
+// Fonction pour supprimer un realm
+async function deleteRealm(index) {
+    try {
+        await ipcRenderer.invoke('delete-realm', index);
+        await displayRealms();
+    } catch (error) {
+        showError(translations[currentLanguage].errors.delete);
+    }
+}
+
+// Fonction pour lancer WoW
+async function launchWow() {
+    try {
+        await ipcRenderer.invoke('launch-wow');
+    } catch (error) {
+        showError(error.message);
+    }
+}
+
+// Fonction pour ouvrir le dossier Addons
+async function openAddonsFolder() {
+    try {
+        await ipcRenderer.invoke('open-addons-folder');
+    } catch (error) {
+        showError(translations[currentLanguage].errors.addons);
+    }
+}
+
+function playSound(soundName) {
+    if (sounds[soundName]) {
+        const sound = sounds[soundName].cloneNode();
+        sound.volume = 0.5;
+        sound.play().catch(e => console.error('Error playing sound:', e));
+    }
+}
+
+// Événements
+if (addRealmBtn) {
+    addRealmBtn.addEventListener('click', () => {
+        playSound('toggle');
+        addRealm();
     });
-    
-    domElements.container.innerHTML = '';
-    domElements.container.appendChild(fragment);
-}, 100);
+}
 
-// Gestionnaires d'événements optimisés
-document.getElementById('select-path').addEventListener('click', () => {
-    sounds.browse.play();
-    ipcRenderer.send('select-wow-path');
-});
+if (launchWowBtn) {
+    launchWowBtn.addEventListener('click', () => {
+        playSound('launch');
+        launchWow();
+    });
+}
 
-document.getElementById('select-exe-path').addEventListener('click', () => {
-    sounds.browse.play();
-    ipcRenderer.send('select-exe-path');
-});
+if (openAddonBtn) {
+    openAddonBtn.addEventListener('click', () => {
+        playSound('toggle');
+        openAddonsFolder();
+    });
+}
 
-document.getElementById('launch-wow').addEventListener('click', () => {
-    sounds.launch.play();
-    if (wowExePath) {
-        shell.openPath(wowExePath);
-    } else {
-        alert('Veuillez sélectionner le chemin de wow.exe');
-    }
-});
-
-// Gestionnaire de langue optimisé
-domElements.languageSelector.addEventListener('change', debounce((event) => {
-    const selectedLang = event.target.value;
-    setLanguage(selectedLang);
-    ipcRenderer.send('change-language', selectedLang);
-}, 250));
-
-// Écouteurs d'événements IPC optimisés
-ipcRenderer.on('config-loaded', (event, config) => {
-    if (config.wowRealmlistPath) {
-        domElements.pathInput.value = config.wowRealmlistPath;
-    }
-    if (config.wowExePath) {
-        domElements.exePathInput.value = config.wowExePath;
-        wowExePath = config.wowExePath;
-    }
-    setLanguage(config.language || 'fr');
-});
-
-ipcRenderer.on('realmlist-data', (event, realmlists) => {
-    console.log('Mise à jour des realmlists reçue:', realmlists);
-    updateRealmList(realmlists);
-});
-
-ipcRenderer.on('update-success', (event, message) => {
-    console.log('Mise à jour réussie:', message);
-});
-
-ipcRenderer.on('update-error', (event, error) => {
-    console.error('Erreur de mise à jour:', error);
-    // Recharger les données en cas d'erreur
-    ipcRenderer.send('get-realmlists');
-});
-
-ipcRenderer.on('selected-wow-path', (event, path) => {
-    if (path) {
-        domElements.pathInput.value = path;
-        ipcRenderer.send('update-realmlist-path', path);
-    }
-});
-
-ipcRenderer.on('selected-exe-path', (event, path) => {
-    if (path) {
-        domElements.exePathInput.value = path;
-        wowExePath = path;
-    }
-});
-
-// Gestion des erreurs
-window.addEventListener('error', (e) => {
-    console.error('Erreur globale:', e.error);
-});
+// Gestion du changement de langue
+if (languageSelect) {
+    languageSelect.addEventListener('change', (event) => {
+        playSound('click');
+        currentLanguage = event.target.value;
+        localStorage.setItem('language', currentLanguage);
+        updateLanguage();
+    });
+}
 
 // Initialisation
-window.addEventListener('DOMContentLoaded', () => {
-    ipcRenderer.send('load-config');
-    ipcRenderer.send('get-realmlists');
+document.addEventListener('DOMContentLoaded', () => {
+    // Charger la langue
+    languageSelect.value = currentLanguage;
+    updateLanguage();
+    
+    // Charger les realms
+    displayRealms();
 });

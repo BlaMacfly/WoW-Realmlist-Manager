@@ -9,6 +9,7 @@ Un outil simple et efficace pour gérer votre fichier realmlist.wtf de World of 
 - Interface moderne et intuitive
 - Support multilingue (FR/EN/ES)
 - Sauvegarde automatique du fichier realmlist.wtf
+- Support Windows et Linux (via Wine)
 - Version portable disponible
 
 ## Capture d'écran
@@ -17,9 +18,22 @@ Un outil simple et efficace pour gérer votre fichier realmlist.wtf de World of 
 
 ## Installation
 
+### Windows
 Vous pouvez au choix :
-- Télécharger et exécuter l'installateur (`WoW Realmlist Manager Setup 1.0.0.exe`)
-- Utiliser la version portable (`WoW Realmlist Manager 1.0.0.exe`)
+- Télécharger et exécuter l'installateur (`WoW Realmlist Manager Setup 2.0.0.exe`)
+- Utiliser la version portable (`WoW Realmlist Manager 2.0.0.exe`)
+
+### Linux
+1. Installez Wine si ce n'est pas déjà fait :
+   ```bash
+   sudo apt update
+   sudo apt install wine wine32:i386 wine64
+   ```
+
+2. Installez le paquet .deb :
+   ```bash
+   sudo dpkg -i wow-realmlist-manager_2.0.0_amd64.deb
+   ```
 
 ## Utilisation
 
@@ -38,3 +52,7 @@ Construit avec :
 ## Licence
 
 Licence MIT - voir le fichier LICENSE pour plus de détails
+
+## Auteur
+
+Projet réalisé par BlaMacfly

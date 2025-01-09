@@ -1,417 +1,59 @@
-const { app, BrowserWindow, ipcMain, dialog, shell } = require('electron');
-const fs = require('fs');
+const { app, BrowserWindow, ipcMain, dialog } = require('electron');
 const path = require('path');
-const os = require('os');
+const fs = require('fs');
+const Store = require('electron-store');
+const store = new Store();
 
 let mainWindow;
-const APP_DATA_PATH = path.join(app.getPath('userData'), 'data');
-const realmlistPath = path.join(APP_DATA_PATH, 'realmlists.json');
-const configPath = path.join(APP_DATA_PATH, 'config.json');
-let wowRealmlistPath = '';
-let wowExePath = '';
-let selectedLanguage = 'fr';
+let promptWindow = null;
 
-// S'assurer que le dossier data existe
-if (!fs.existsSync(APP_DATA_PATH)) {
-    fs.mkdirSync(APP_DATA_PATH, { recursive: true });
-}
-
-// Copier le fichier realmlists.json par défaut s'il n'existe pas
-if (!fs.existsSync(realmlistPath)) {
-    const defaultRealmlistPath = path.join(__dirname, 'realmlists.json');
-    if (fs.existsSync(defaultRealmlistPath)) {
-        fs.copyFileSync(defaultRealmlistPath, realmlistPath);
-    } else {
-        // Créer un fichier realmlists.json par défaut
-        const defaultRealmlists = [
-            {
-                "address": "set realmlist logon.wow-europe.com",
-                "disabled": false,
-                "active": true
-            }
-        ];
-        fs.writeFileSync(realmlistPath, JSON.stringify(defaultRealmlists, null, 2));
-    }
-}
-
-// Désactiver l'accélération matérielle
-app.disableHardwareAcceleration();
-
-// Cache des realmlists pour de meilleures performances
-let realmlistsCache = null;
-let lastCacheTime = 0;
-const CACHE_DURATION = 5000; // 5 secondes
-
-// Chemins par défaut pour Windows
-const DEFAULT_WOW_PATHS = [
-    'C:\\Program Files (x86)\\World of Warcraft\\',
-    'C:\\Program Files\\World of Warcraft\\',
-    'D:\\Program Files (x86)\\World of Warcraft\\',
-    'D:\\Program Files\\World of Warcraft\\',
-    'E:\\Program Files (x86)\\World of Warcraft\\',
-    'E:\\Program Files\\World of Warcraft\\'
-];
-
-// Fonction pour normaliser les chemins Windows
-function normalizePath(filePath) {
-    return path.normalize(filePath).replace(/\//g, '\\');
-}
-
-// Fonction pour détecter automatiquement le dossier WoW
-function detectWowPath() {
-    for (const basePath of DEFAULT_WOW_PATHS) {
-        const realmlistPath = path.join(basePath, 'Data', 'enUS', 'realmlist.wtf');
-        const exePath = path.join(basePath, 'Wow.exe');
-        
-        if (fs.existsSync(realmlistPath) && fs.existsSync(exePath)) {
-            return {
-                realmlistPath: normalizePath(realmlistPath),
-                exePath: normalizePath(exePath)
-            };
-        }
-    }
-    return null;
-}
-
-// Vérifier les permissions Windows
-function checkWindowsPermissions(filePath) {
-    try {
-        // Tester l'accès en lecture
-        fs.accessSync(filePath, fs.constants.R_OK);
-        
-        // Tester l'accès en écriture
-        fs.accessSync(filePath, fs.constants.W_OK);
-        
-        return true;
-    } catch (error) {
-        console.error(`Erreur de permissions pour ${filePath}:`, error);
-        return false;
-    }
-}
-
-// Charger la configuration
-function loadConfig() {
-    try {
-        const data = fs.readFileSync(configPath, 'utf-8');
-        const config = JSON.parse(data);
-        
-        // Si aucun chemin n'est configuré, essayer la détection automatique
-        if (!config.wowRealmlistPath || !config.wowExePath) {
-            const detectedPaths = detectWowPath();
-            if (detectedPaths) {
-                wowRealmlistPath = detectedPaths.realmlistPath;
-                wowExePath = detectedPaths.exePath;
-                // Sauvegarder les chemins détectés
-                saveConfig();
-            }
-        } else {
-            wowRealmlistPath = normalizePath(config.wowRealmlistPath);
-            wowExePath = normalizePath(config.wowExePath);
-        }
-        
-        selectedLanguage = config.language || 'fr';
-    } catch (error) {
-        console.log('Aucun fichier de configuration trouvé, tentative de détection automatique...');
-        const detectedPaths = detectWowPath();
-        if (detectedPaths) {
-            wowRealmlistPath = detectedPaths.realmlistPath;
-            wowExePath = detectedPaths.exePath;
-        }
-        saveConfig();
-    }
-}
-
-// Sauvegarder la configuration avec debounce
-let saveConfigTimeout = null;
-function saveConfig() {
-    if (saveConfigTimeout) {
-        clearTimeout(saveConfigTimeout);
-    }
-    
-    saveConfigTimeout = setTimeout(() => {
-        const config = {
-            wowRealmlistPath,
-            wowExePath,
-            language: selectedLanguage
-        };
-        try {
-            fs.writeFileSync(configPath, JSON.stringify(config, null, 2));
-            console.log('Configuration sauvegardée :', config);
-        } catch (error) {
-            console.error('Erreur lors de la sauvegarde de la configuration:', error);
-        }
-    }, 500);
-}
-
-// Lire les adresses realm avec cache
-async function getRealmlists() {
-    return new Promise((resolve, reject) => {
-        console.log('Lecture des realmlists depuis:', realmlistPath);
-        
-        fs.readFile(realmlistPath, 'utf-8', (err, data) => {
-            if (err) {
-                console.error("Erreur de lecture de realmlists.json :", err);
-                reject(err);
-                return;
-            }
-            try {
-                const realmlists = JSON.parse(data);
-                console.log('Realmlists chargés:', realmlists);
-                realmlistsCache = JSON.parse(JSON.stringify(realmlists)); // Copie profonde
-                lastCacheTime = Date.now();
-                resolve(realmlists);
-            } catch (parseError) {
-                console.error("Erreur de parsing de realmlists.json :", parseError);
-                reject(parseError);
-            }
-        });
-    });
-}
-
-// Enregistrer les modifications de realmlists avec vérification
-async function saveRealmlists(realmlists) {
-    console.log('Tentative de sauvegarde des realmlists:', realmlists);
-    
-    return new Promise((resolve, reject) => {
-        try {
-            // Créer une sauvegarde avant modification
-            const backupPath = realmlistPath + '.backup';
-            if (fs.existsSync(realmlistPath)) {
-                fs.copyFileSync(realmlistPath, backupPath);
-            }
-
-            // Formater l'adresse si nécessaire
-            realmlists = realmlists.map(realm => {
-                // Supprimer "set realmlist" s'il est déjà présent
-                const cleanAddress = realm.address.replace(/^set\s+realmlist\s+/i, '');
-                return {
-                    ...realm,
-                    address: `set realmlist ${cleanAddress}`
-                };
-            });
-
-            // Sauvegarder les nouvelles données
-            const data = JSON.stringify(realmlists, null, 2);
-            fs.writeFileSync(realmlistPath, data, 'utf-8');
-
-            // Vérifier que les données ont été correctement écrites
-            const savedData = fs.readFileSync(realmlistPath, 'utf-8');
-            const savedRealmlists = JSON.parse(savedData);
-
-            if (JSON.stringify(savedRealmlists) === JSON.stringify(realmlists)) {
-                // Mettre à jour le cache immédiatement avec une copie profonde
-                realmlistsCache = JSON.parse(JSON.stringify(realmlists));
-                lastCacheTime = Date.now();
-                resolve(true);
-            } else {
-                // Restaurer la sauvegarde en cas d'erreur
-                if (fs.existsSync(backupPath)) {
-                    fs.copyFileSync(backupPath, realmlistPath);
-                }
-                reject(new Error("Les données sauvegardées ne correspondent pas"));
-            }
-
-            // Nettoyer la sauvegarde
-            if (fs.existsSync(backupPath)) {
-                fs.unlinkSync(backupPath);
-            }
-        } catch (error) {
-            console.error("Erreur lors de la sauvegarde des realmlists:", error);
-            reject(error);
-        }
-    });
-}
-
-// Mettre à jour le fichier realmlist.wtf avec vérification
-async function updateWowRealmlist(newRealmlist) {
-    return new Promise((resolve, reject) => {
-        if (!wowRealmlistPath) {
-            reject(new Error('Chemin du fichier realmlist.wtf non configuré'));
-            return;
-        }
-
-        // Vérifier les permissions avant d'écrire
-        if (!checkWindowsPermissions(wowRealmlistPath)) {
-            reject(new Error('Permissions insuffisantes pour modifier le fichier realmlist.wtf'));
-            return;
-        }
-
-        // Supprimer "set realmlist" s'il est déjà présent dans newRealmlist
-        const cleanRealmlist = newRealmlist.replace(/^set\s+realmlist\s+/i, '');
-        const realmlistContent = `set realmlist ${cleanRealmlist}\n`;
-        
-        // Créer une sauvegarde avant modification
-        const backupPath = wowRealmlistPath + '.backup';
-        try {
-            if (fs.existsSync(wowRealmlistPath)) {
-                fs.copyFileSync(wowRealmlistPath, backupPath);
-            }
-            
-            fs.writeFileSync(wowRealmlistPath, realmlistContent, 'utf-8');
-            
-            // Vérifier que le fichier a été correctement écrit
-            const writtenContent = fs.readFileSync(wowRealmlistPath, 'utf-8');
-            if (writtenContent.trim() === realmlistContent.trim()) {
-                resolve(true);
-            } else {
-                // Restaurer la sauvegarde en cas d'erreur
-                if (fs.existsSync(backupPath)) {
-                    fs.copyFileSync(backupPath, wowRealmlistPath);
-                }
-                reject(new Error('Erreur de vérification après écriture'));
-            }
-        } catch (error) {
-            console.error('Erreur lors de la mise à jour du realmlist:', error);
-            // Restaurer la sauvegarde en cas d'erreur
-            if (fs.existsSync(backupPath)) {
-                fs.copyFileSync(backupPath, wowRealmlistPath);
-            }
-            reject(error);
-        } finally {
-            // Nettoyer la sauvegarde
-            if (fs.existsSync(backupPath)) {
-                fs.unlinkSync(backupPath);
-            }
-        }
-    });
-}
-
-// Configuration de l'application
-app.whenReady().then(() => {
-    loadConfig();
-
+function createWindow() {
     mainWindow = new BrowserWindow({
         width: 800,
         height: 600,
-        icon: path.join(__dirname, 'icon.ico'),
+        frame: false,
         webPreferences: {
             nodeIntegration: true,
-            contextIsolation: false,
-            backgroundThrottling: false
+            contextIsolation: false
         },
-        show: false
+        icon: path.join(__dirname, 'icon.png')
     });
 
     mainWindow.loadFile('index.html');
+    mainWindow.setMenu(null);
+}
 
-    mainWindow.once('ready-to-show', () => {
-        mainWindow.show();
-    });
+function createPromptDialog(prompt) {
+    if (promptWindow) {
+        promptWindow.close();
+    }
 
-    // Gestionnaires d'événements IPC
-    ipcMain.on('get-realmlists', async (event) => {
-        try {
-            const realmlists = await getRealmlists();
-            event.reply('realmlist-data', realmlists);
-        } catch (error) {
-            event.reply('update-error', error.message);
+    promptWindow = new BrowserWindow({
+        width: 400,
+        height: 150,
+        frame: false,
+        parent: mainWindow,
+        modal: true,
+        show: false,
+        webPreferences: {
+            nodeIntegration: true,
+            contextIsolation: false
         }
     });
 
-    ipcMain.on('update-realm', async (event, newAddress, index) => {
-        console.log('Demande de mise à jour du realm:', { newAddress, index });
-        
-        try {
-            const realmlists = await getRealmlists();
-            console.log('Realmlists actuels:', realmlists);
-            
-            if (!realmlists[index]) {
-                throw new Error("Index de realmlist invalide");
-            }
+    promptWindow.loadFile('prompt.html');
 
-            // Formater l'adresse si nécessaire
-            const formattedAddress = newAddress.startsWith('set realmlist ') 
-                ? newAddress 
-                : `set realmlist ${newAddress}`;
-
-            console.log('Ancien realm:', realmlists[index]);
-            realmlists[index].address = formattedAddress;
-            console.log('Nouveau realm:', realmlists[index]);
-
-            // Sauvegarder d'abord les modifications dans le fichier realmlists.json
-            await saveRealmlists(realmlists);
-            console.log('Sauvegarde des realmlists réussie');
-
-            // Puis mettre à jour le fichier realmlist.wtf
-            await updateWowRealmlist(formattedAddress);
-            console.log('Mise à jour du realmlist.wtf réussie');
-
-            // Mettre à jour l'interface avec les données sauvegardées
-            const updatedRealmlists = await getRealmlists();
-            event.reply('realmlist-data', updatedRealmlists);
-            event.reply('update-success', 'Realmlist mis à jour avec succès');
-        } catch (error) {
-            console.error('Erreur lors de la mise à jour du realm:', error);
-            event.reply('update-error', error.message);
-            
-            // Recharger les données en cas d'erreur
-            try {
-                const currentRealmlists = await getRealmlists();
-                event.reply('realmlist-data', currentRealmlists);
-            } catch (reloadError) {
-                console.error('Erreur lors du rechargement des realmlists:', reloadError);
-            }
-        }
+    promptWindow.webContents.on('did-finish-load', () => {
+        promptWindow.webContents.send('set-prompt', prompt);
+        promptWindow.show();
     });
 
-    ipcMain.on('activate-realm', async (event, index) => {
-        try {
-            const realmlists = await getRealmlists();
-            realmlists.forEach((realm, i) => {
-                realm.active = (i === index);
-            });
-            await saveRealmlists(realmlists);
-            if (realmlists[index]) {
-                await updateWowRealmlist(realmlists[index].address);
-            }
-            event.reply('realmlist-data', realmlists);
-            event.reply('update-success', 'Realm activé avec succès');
-        } catch (error) {
-            console.error('Erreur lors de l\'activation du realm:', error);
-            event.reply('update-error', error.message);
-        }
+    promptWindow.on('closed', () => {
+        promptWindow = null;
     });
+}
 
-    ipcMain.on('load-config', (event) => {
-        loadConfig();
-        event.reply('config-loaded', { wowRealmlistPath, wowExePath, language: selectedLanguage });
-    });
-
-    ipcMain.on('update-realmlist-path', (event, path) => {
-        wowRealmlistPath = path.endsWith('realmlist.wtf') ? path : path + '\\realmlist.wtf';
-        saveConfig();
-        event.reply('update-success', 'Chemin du realmlist.wtf mis à jour avec succès');
-    });
-
-    ipcMain.on('select-wow-path', (event) => {
-        dialog.showOpenDialog(mainWindow, {
-            properties: ['openDirectory']
-        }).then(result => {
-            if (!result.canceled) {
-                const selectedPath = result.filePaths[0];
-                event.reply('selected-wow-path', selectedPath);
-            }
-        });
-    });
-
-    ipcMain.on('select-exe-path', (event) => {
-        dialog.showOpenDialog(mainWindow, {
-            properties: ['openFile'],
-            filters: [{ name: 'Executables', extensions: ['exe'] }]
-        }).then(result => {
-            if (!result.canceled) {
-                wowExePath = result.filePaths[0];
-                saveConfig();
-                event.reply('selected-exe-path', wowExePath);
-            }
-        });
-    });
-
-    ipcMain.on('change-language', (event, lang) => {
-        selectedLanguage = lang;
-        saveConfig();
-    });
-});
+app.whenReady().then(createWindow);
 
 app.on('window-all-closed', () => {
     if (process.platform !== 'darwin') {
@@ -422,5 +64,221 @@ app.on('window-all-closed', () => {
 app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) {
         createWindow();
+    }
+});
+
+// Gestion des realms
+function getRealmlists() {
+    return store.get('realmlists', []);
+}
+
+function saveRealmlists(realmlists) {
+    store.set('realmlists', realmlists);
+}
+
+// Fonction pour trouver le dossier de langue
+function findLanguageFolder(dataPath) {
+    const languageFolders = ['frFR', 'enUS', 'deDE', 'esES', 'esMX', 'ptBR', 'itIT', 'ruRU'];
+    
+    for (const lang of languageFolders) {
+        const langPath = path.join(dataPath, lang);
+        if (fs.existsSync(langPath)) {
+            return langPath;
+        }
+    }
+    
+    // Si aucun dossier de langue n'est trouvé, utiliser le premier de la liste
+    const defaultLang = languageFolders[0];
+    const defaultPath = path.join(dataPath, defaultLang);
+    fs.mkdirSync(defaultPath, { recursive: true });
+    return defaultPath;
+}
+
+// Fonction pour mettre à jour le fichier realmlist.wtf
+async function updateRealmlistFile(address) {
+    const wowPath = store.get('wowPath');
+    if (!wowPath) {
+        throw new Error('Please select WoW.exe first');
+    }
+
+    const wowDir = path.dirname(wowPath);
+    const dataPath = path.join(wowDir, 'Data');
+
+    // Créer le dossier Data s'il n'existe pas
+    if (!fs.existsSync(dataPath)) {
+        fs.mkdirSync(dataPath, { recursive: true });
+    }
+
+    // Trouver ou créer le dossier de langue approprié
+    const langPath = findLanguageFolder(dataPath);
+    const realmlistPath = path.join(langPath, 'realmlist.wtf');
+
+    // Écrire le fichier realmlist.wtf avec exactement le même contenu que dans la liste
+    fs.writeFileSync(realmlistPath, `${address}\n`);
+    console.log(`Realmlist updated at: ${realmlistPath}`);
+    console.log(`New content: ${address}`);
+}
+
+// Fonction pour lancer WoW selon le système d'exploitation
+async function launchWow(wowPath) {
+    const isLinux = process.platform === 'linux';
+    const isWindows = process.platform === 'win32';
+
+    try {
+        if (isWindows) {
+            // Lancement direct sous Windows
+            const wow = require('child_process').spawn(wowPath, [], {
+                detached: true,
+                stdio: 'ignore'
+            });
+            wow.unref();
+        } else if (isLinux) {
+            // Vérifier si Wine est installé
+            try {
+                await require('child_process').execSync('which wine');
+            } catch (error) {
+                throw new Error('Wine is not installed. Please install Wine to run WoW on Linux.');
+            }
+
+            // Lancement avec Wine sous Linux
+            const wow = require('child_process').spawn('wine', [wowPath], {
+                detached: true,
+                stdio: 'ignore'
+            });
+            wow.unref();
+        } else {
+            throw new Error('Unsupported operating system');
+        }
+        console.log('WoW launched successfully');
+    } catch (error) {
+        console.error('Error launching WoW:', error);
+        throw new Error(`Error launching WoW: ${error.message}`);
+    }
+}
+
+// IPC Events
+ipcMain.handle('get-realmlists', () => {
+    return getRealmlists();
+});
+
+ipcMain.handle('add-realm', (event, address) => {
+    const realmlists = getRealmlists();
+    if (realmlists.length >= 5) {
+        throw new Error('Maximum number of realms reached (5)');
+    }
+    realmlists.push({ address, active: false });
+    saveRealmlists(realmlists);
+    return realmlists;
+});
+
+ipcMain.handle('toggle-realm', async (event, index) => {
+    const realmlists = getRealmlists();
+    realmlists.forEach((realm, i) => {
+        realm.active = i === index;
+    });
+    
+    // Mettre à jour le fichier realmlist.wtf avec le nouveau realm actif
+    const activeRealm = realmlists.find(realm => realm.active);
+    if (activeRealm) {
+        await updateRealmlistFile(activeRealm.address);
+    }
+    
+    saveRealmlists(realmlists);
+    return realmlists;
+});
+
+ipcMain.handle('delete-realm', (event, index) => {
+    const realmlists = getRealmlists();
+    realmlists.splice(index, 1);
+    saveRealmlists(realmlists);
+    return realmlists;
+});
+
+ipcMain.handle('select-wow-path', async () => {
+    const result = await dialog.showOpenDialog(mainWindow, {
+        properties: ['openFile'],
+        filters: [{ name: 'WoW.exe', extensions: ['exe'] }]
+    });
+
+    if (!result.canceled && result.filePaths.length > 0) {
+        const wowPath = result.filePaths[0];
+        store.set('wowPath', wowPath);
+        return wowPath;
+    }
+    return null;
+});
+
+ipcMain.handle('show-prompt-dialog', (event, prompt) => {
+    return new Promise((resolve) => {
+        createPromptDialog(prompt);
+
+        ipcMain.once('prompt-response', (event, value) => {
+            if (promptWindow) {
+                promptWindow.close();
+            }
+            resolve(value);
+        });
+
+        ipcMain.once('prompt-cancel', () => {
+            if (promptWindow) {
+                promptWindow.close();
+            }
+            resolve(null);
+        });
+    });
+});
+
+ipcMain.handle('launch-wow', async () => {
+    const wowPath = store.get('wowPath');
+    if (!wowPath) {
+        throw new Error('Please select WoW.exe first');
+    }
+
+    const realmlists = getRealmlists();
+    const activeRealm = realmlists.find(realm => realm.active);
+    if (!activeRealm) {
+        throw new Error('Please select an active realm first');
+    }
+
+    await launchWow(wowPath);
+});
+
+ipcMain.handle('open-addons-folder', async () => {
+    const wowPath = store.get('wowPath');
+    if (!wowPath) {
+        throw new Error('Please select WoW.exe first');
+    }
+
+    const wowDir = path.dirname(wowPath);
+    const addonsPath = path.join(wowDir, 'Interface', 'AddOns');
+
+    try {
+        if (!fs.existsSync(addonsPath)) {
+            fs.mkdirSync(addonsPath, { recursive: true });
+        }
+        require('child_process').exec(`explorer "${addonsPath}"`);
+    } catch (error) {
+        throw new Error('Error opening addons folder: ' + error.message);
+    }
+});
+
+// Window controls
+ipcMain.on('minimize-window', () => {
+    try {
+        if (mainWindow && !mainWindow.isDestroyed()) {
+            mainWindow.minimize();
+        }
+    } catch (error) {
+        console.error('Error minimizing window:', error);
+    }
+});
+
+ipcMain.on('close-window', () => {
+    try {
+        if (mainWindow && !mainWindow.isDestroyed()) {
+            mainWindow.close();
+        }
+    } catch (error) {
+        console.error('Error closing window:', error);
     }
 });

@@ -1,107 +1,174 @@
 body {
-    background-image: url('images/background2.jpg');
-    background-size: cover;
-    background-position: center;
-    background-repeat: no-repeat;
-    background-attachment: fixed;
-    background-color: #0c1a26; /* Bleu nuit glacial */
-    color: #d1d5db; /* Gris clair pour une bonne lisibilité */
-    font-family: 'Morpheus', 'Arial', sans-serif;
-    margin: 20px;
-    min-height: 100vh;
-    position: relative;
+    margin: 0;
+    padding: 0;
+    background-color: black;
+    color: white;
+    font-family: Arial, sans-serif;
+    user-select: none;
 }
 
-body::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background-color: rgba(12, 26, 38, 0.75); /* Overlay légèrement plus foncé pour cette image */
-    z-index: -1;
+.titlebar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    height: 30px;
+    background-color: black;
+    border-bottom: 1px solid #b39248;
+    -webkit-app-region: drag;
+    padding: 0 10px;
 }
 
-h1 {
-    text-align: center;
-    color: #99ccff; /* Bleu clair éclatant */
+.window-title {
+    color: #b39248;
+    font-weight: bold;
 }
 
-a {
-    color: #4da6ff; /* Bleu vif pour les liens */
+.window-controls {
+    display: flex;
+    gap: 5px;
+    -webkit-app-region: no-drag;
 }
 
-div {
-    margin-bottom: 20px;
+.window-controls button {
+    width: 30px;
+    height: 30px;
+    border: none;
+    background: transparent;
+    color: #b39248;
+    font-size: 16px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.window-controls button:hover {
+    background-color: rgba(179, 146, 72, 0.2);
+}
+
+#close-btn:hover {
+    background-color: #c42b1c;
+    color: white;
+}
+
+.content {
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.config-section {
+    border: 1px solid #b39248;
+    padding: 15px;
+    border-radius: 5px;
+}
+
+.path-group {
+    display: flex;
+    gap: 10px;
+    align-items: center;
 }
 
 input[type="text"] {
-    width: 300px;
+    flex: 1;
     padding: 8px;
-    margin-right: 10px;
-    border: 1px solid #c79c6e; /* Doré WoW */
-    border-radius: 5px;
-    background-color: #1c3b57;
-    color: #d1d5db;
-    font-family: 'Morpheus', 'Arial', sans-serif;
+    background-color: rgba(0, 0, 0, 0.8);
+    border: 1px solid #b39248;
+    color: white;
+    border-radius: 3px;
 }
 
 button {
-    background-color: #2e2a25;
-    color: #ffd700; /* Doré WoW */
-    font-family: 'Morpheus', 'Arial', sans-serif;
-    border: 1px solid #c79c6e; /* Doré */
-    padding: 10px 20px;
-    border-radius: 5px;
+    padding: 8px 15px;
+    background-color: black;
+    border: 1px solid #b39248;
+    color: #b39248;
     cursor: pointer;
-    transition: background-color 0.3s;
+    border-radius: 3px;
+    transition: all 0.2s;
 }
 
 button:hover {
-    background-color: #3b3a36;
+    background-color: #b39248;
+    color: black;
 }
 
-/* Styles pour le conteneur de realmlists */
-#realmlist-container {
-    margin-top: 20px;
+.actions {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+}
+
+.realm-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
 }
 
 .realm-item {
     display: flex;
+    gap: 10px;
     align-items: center;
-    margin-bottom: 10px;
     padding: 10px;
-    background-color: #1c3b57;
+    border: 1px solid #b39248;
     border-radius: 5px;
-    border: 1px solid #c79c6e;
+    background-color: rgba(0, 0, 0, 0.8);
 }
 
-.realm-item input[type="text"] {
+.realm-item.active {
+    background-color: rgba(179, 146, 72, 0.2);
+}
+
+.realm-address {
     flex: 1;
-    margin-right: 10px;
+    background: transparent;
+    border: none;
+    color: white;
+    padding: 5px;
 }
 
-.realm-item button {
-    margin-left: 5px;
-    min-width: 60px;
+.realm-controls {
+    display: flex;
+    gap: 5px;
 }
 
-.modify-button {
-    background-color: #2e2a25;
+.language-select {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
 }
 
-.realm-item button:last-child {
-    width: 60px;
+select {
+    padding: 5px;
+    background-color: black;
+    border: 1px solid #b39248;
+    color: #b39248;
+    border-radius: 3px;
 }
 
-/* Style pour les boutons On/Off */
-.realm-item button[style*="background-color: green"] {
-    background-color: #2d5a27 !important;
-    color: #7fff00;
+select:focus {
+    outline: none;
+    border-color: #c4a25c;
 }
 
-.realm-item button[style*="background-color: red"] {
-    background-color: #5a2727 !important;
-    color: #ff6b6b;
+.error-message {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background-color: #c42b1c;
+    color: white;
+    padding: 10px 20px;
+    border-radius: 5px;
+    animation: fadeIn 0.3s, fadeOut 0.3s 2.7s;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeOut {
+    from { opacity: 1; transform: translateY(0); }
+    to { opacity: 0; transform: translateY(-20px); }
 }
