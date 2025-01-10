@@ -18,9 +18,8 @@ Un outil simple et efficace pour gérer votre fichier realmlist.wtf de World of 
 ## Installation
 
 ### Windows
-Vous pouvez au choix :
-- Télécharger et exécuter l'installateur (`WoW Realmlist Manager Setup 2.0.0.exe`)
-- Utiliser la version portable (`WoW Realmlist Manager 2.0.0.exe`)
+Télécharger WoW Realmlist Manager 2.0.0.exe
+
 
 ### Linux
 1. Installez Wine si ce n'est pas déjà fait :
