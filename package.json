@@ -5,6 +5,7 @@
   "main": "main.js",
   "author": "BlaMacfly",
   "license": "MIT",
+  "homepage": "https://github.com/BlaMacfly/WoW-Realmlist-Manager",
   "scripts": {
     "start": "electron .",
     "build": "electron-builder --config.win.signAndEditExecutable=false",
