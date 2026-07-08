@@ -209,6 +209,7 @@ input[type="text"]:focus, input[type="search"]:focus { border-color: var(--gold)
     display: flex; align-items: center; justify-content: center; z-index: 100;
     animation: fade 0.15s ease;
 }
+.modal-overlay[hidden] { display: none; }
 .modal {
     width: min(420px, 90vw);
     background: var(--bg-elev);
