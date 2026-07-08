@@ -1,44 +1,79 @@
 <!DOCTYPE html>
-<html>
+<html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'">
-    <title>WoW Realmlist Manager</title>
+    <meta http-equiv="Content-Security-Policy"
+          content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:; media-src 'self'; font-src 'self'">
+    <title>RealmList Manager</title>
     <link rel="stylesheet" href="assets/style.css">
 </head>
 <body>
     <div class="titlebar">
-        <div class="window-title" data-translate="title">Gestionnaire de Realmlist</div>
+        <div class="titlebar-left">
+            <img src="icon.png" class="titlebar-logo" alt="">
+            <span class="window-title" data-i18n="title">RealmList Manager</span>
+        </div>
         <div class="window-controls">
-            <button id="minimize-btn">─</button>
-            <button id="close-btn">×</button>
+            <button id="theme-btn" class="icon-btn" title="Theme">◐</button>
+            <button id="minimize-btn" class="icon-btn">─</button>
+            <button id="close-btn" class="icon-btn close">×</button>
         </div>
     </div>
 
-    <div class="content">
-        <div class="config-section">
+    <main class="content">
+        <section class="config-section">
+            <label class="field-label" data-i18n="pathLabel">Chemin vers WoW.exe</label>
             <div class="path-group">
-                <label for="path-input" data-translate="pathLabel">Chemin vers WoW.exe:</label>
-                <input type="text" id="path-input" readonly>
-                <button id="select-path" data-translate="browse">Parcourir</button>
+                <input type="text" id="path-input" readonly placeholder="…">
+                <button id="select-path" class="btn" data-i18n="browse">Parcourir</button>
             </div>
-        </div>
+            <div class="current-realm" id="current-realm"></div>
+        </section>
 
-        <div class="actions">
-            <button id="add-realm" data-translate="addRealm">Ajouter un realm</button>
-            <button id="launch-wow" data-translate="launchWow">Lancer WoW</button>
-            <button id="open-addon" data-translate="openAddons">Dossier Addons</button>
-        </div>
+        <section class="toolbar">
+            <div class="toolbar-main">
+                <button id="add-realm" class="btn btn-primary" data-i18n="addRealm">+ Ajouter un realm</button>
+                <button id="launch-wow" class="btn btn-accent" data-i18n="launchWow">▶ Lancer WoW</button>
+                <button id="open-addon" class="btn" data-i18n="openAddons">Dossier Addons</button>
+            </div>
+            <div class="toolbar-extra">
+                <input type="search" id="search-input" class="search" data-i18n-ph="search" placeholder="Rechercher…">
+                <button id="import-realms" class="btn btn-small" data-i18n="import">Importer</button>
+                <button id="export-realms" class="btn btn-small" data-i18n="export">Exporter</button>
+            </div>
+        </section>
 
-        <div class="realm-list" id="realm-list">
-            <!-- Les realms seront ajoutés ici dynamiquement -->
+        <section class="realm-list" id="realm-list"></section>
+        <div class="empty-state" id="empty-state" hidden data-i18n="empty">
+            Aucun realm. Cliquez sur « Ajouter un realm » pour commencer.
         </div>
+    </main>
 
-        <div class="language-select">
-            <select id="language-select">
+    <footer class="statusbar">
+        <span id="status-text" class="status-text"></span>
+        <div class="lang-wrap">
+            <select id="language-select" class="lang-select">
                 <option value="fr">Français</option>
                 <option value="en">English</option>
+                <option value="de">Deutsch</option>
+                <option value="es">Español</option>
             </select>
+        </div>
+    </footer>
+
+    <!-- Modale d'ajout / édition -->
+    <div class="modal-overlay" id="modal-overlay" hidden>
+        <div class="modal" role="dialog" aria-modal="true">
+            <h2 id="modal-title" data-i18n="addRealm">Ajouter un realm</h2>
+            <label class="field-label" data-i18n="nameLabel">Nom (facultatif)</label>
+            <input type="text" id="modal-name" data-i18n-ph="namePlaceholder" placeholder="Ex : Firestorm Sethraliss">
+            <label class="field-label" data-i18n="addressLabel">Adresse du realm</label>
+            <input type="text" id="modal-address" placeholder="logon.exemple.com">
+            <p class="modal-hint" data-i18n="addressHint">« set realmlist » est ajouté automatiquement.</p>
+            <div class="modal-buttons">
+                <button id="modal-cancel" class="btn" data-i18n="cancel">Annuler</button>
+                <button id="modal-save" class="btn btn-primary" data-i18n="save">Enregistrer</button>
+            </div>
         </div>
     </div>
 

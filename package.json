@@ -1,8 +1,10 @@
 {
   "name": "wow-realmlist-manager",
-  "version": "2.0.0",
-  "description": "WoW Realmlist Manager",
+  "version": "3.0.0",
+  "description": "A modern tool to manage your World of Warcraft realmlist.wtf and switch between private servers in one click.",
   "main": "main.js",
+  "author": "BlaMacfly",
+  "license": "MIT",
   "scripts": {
     "start": "electron .",
     "build": "electron-builder --config.win.signAndEditExecutable=false",
@@ -16,33 +18,31 @@
     "directories": {
       "output": "dist"
     },
+    "files": [
+      "main.js",
+      "preload.js",
+      "index.html",
+      "assets/**/*",
+      "icon.png",
+      "icon.ico"
+    ],
     "win": {
-      "target": [
-        "portable"
-      ],
-      "icon": "icon.png"
+      "target": ["portable"],
+      "icon": "icon.ico"
     },
     "linux": {
       "target": ["deb"],
-      "icon": "assets/images/icon.png",
+      "icon": "icon.png",
       "category": "Game",
-      "maintainer": "WoW Realmlist Manager",
+      "maintainer": "BlaMacfly",
       "description": "A tool to manage WoW realm lists"
-    },
-    "files": [
-      "**/*",
-      "assets/*",
-      "!assets/images/icon.ico",
-      "!assets/images/icon.png"
-    ]
+    }
   },
-  "author": "",
-  "license": "ISC",
   "devDependencies": {
-    "electron": "^25.9.8",
-    "electron-builder": "^24.9.1"
+    "electron": "^31.7.7",
+    "electron-builder": "^24.13.3"
   },
   "dependencies": {
-    "electron-store": "^8.1.0"
+    "electron-store": "^8.2.0"
   }
 }
